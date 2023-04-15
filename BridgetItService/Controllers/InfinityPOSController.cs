@@ -9,9 +9,11 @@ namespace BridgetItService.Controllers
     public class InfinityPOSController : ControllerBase
     {
         private readonly IInfinityPOSClient _infinityPOSService;
-        public InfinityPOSController(IInfinityPOSClient infinityPOSService)
+        private readonly IShopifyService _shopifyService;
+        public InfinityPOSController(IInfinityPOSClient infinityPOSService, IShopifyService shopifyService)
         {
             _infinityPOSService = infinityPOSService;
+            _shopifyService = shopifyService;
         }
 
         [HttpGet()]
@@ -19,6 +21,19 @@ namespace BridgetItService.Controllers
         {
             var result = await _infinityPOSService.GetAuthentication();
             return Ok(result);
+        }
+
+        [HttpGet("/products")]
+        public async Task<IActionResult> GetAsync(string startDate)
+        {
+            var result = await _infinityPOSService.GetProducts(startDate);
+            return Ok(result);
+        }
+        [HttpPost("/AddProductsInShopify")]
+        public async Task<IActionResult> PublishProduct(string startDate)
+        {
+            var products = await _infinityPOSService.GetProducts(startDate);
+            return Ok(products);
         }
     }
 }

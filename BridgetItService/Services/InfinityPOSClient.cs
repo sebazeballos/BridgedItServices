@@ -1,8 +1,11 @@
 using BridgetItService.Contracts;
 using BridgetItService.Models;
 using BridgetItService.Settings;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.ServiceFabric.Services.Communication;
+using ShopifySharp;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -45,8 +48,8 @@ namespace BridgetItService.Services
             {
                 response = await _client.SendAsync(requestMessage);
                 response.EnsureSuccessStatusCode();
-                var content = await response.Content.ReadAsStringAsync();
-                return content;
+                var auth = Deserialize<Auth>( await response.Content.ReadAsStringAsync());
+                return auth.accessToken;
             }
             catch (HttpRequestException ex) {
 
@@ -54,12 +57,22 @@ namespace BridgetItService.Services
             }
         }
 
-        private async Task<string> SendRequest(HttpMethod method, string endpoint, object? body = null)
+        public async Task<string> GetProducts(string startDate)
         {
-            var auth = Deserialize<Auth>(await GetAuthentication());
-            var requestMessage = new HttpRequestMessage(method, endpoint);
-            requestMessage.Headers.Authorization =
-                new AuthenticationHeaderValue("Bearer", auth.accessToken);
+            try {
+                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuthentication());
+                var response = await _client.GetAsync($"{_options.Value.BaseEndpoint}/products?updated_since={startDate}");
+
+                response.EnsureSuccessStatusCode();
+
+                var products = await response.Content.ReadAsStringAsync();
+                return products;
+            }
+            catch (HttpRequestException ex)
+            {
+
+                throw new ServiceException($"REQUEST {HttpMethods.Post} to {_options.Value.AuthorizationEndpoint} FAILD with body:", ex.ToString());
+            }
         }
         private HttpContent SerializeBody(object body) {
 
