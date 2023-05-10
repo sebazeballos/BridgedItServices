@@ -24,6 +24,7 @@ namespace BridgetItService
             // Add the IHttpClientFactory service
             services.AddHttpClient();
             services.AddSingleton<IInfinityPOSClient, InfinityPOSClient>();
+            services.AddSingleton<IShopifyService, ShopifyService>();
 
             services.AddMvc();
             services.AddControllers();
