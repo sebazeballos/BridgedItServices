@@ -2269,23 +2269,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Administrador\\.nuget\\packages\\": {},
+    "C:\\Users\\szeballos\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Administrador\\Documents\\GitHub\\BridgetItService\\BridgetItService\\BridgetItService.csproj",
+      "projectUniqueName": "C:\\Users\\szeballos\\Documents\\GitHub\\BridgedItServices-1\\BridgetItService\\BridgetItService.csproj",
       "projectName": "BridgetItService",
-      "projectPath": "C:\\Users\\Administrador\\Documents\\GitHub\\BridgetItService\\BridgetItService\\BridgetItService.csproj",
-      "packagesPath": "C:\\Users\\Administrador\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Administrador\\Documents\\GitHub\\BridgetItService\\BridgetItService\\obj\\",
+      "projectPath": "C:\\Users\\szeballos\\Documents\\GitHub\\BridgedItServices-1\\BridgetItService\\BridgetItService.csproj",
+      "packagesPath": "C:\\Users\\szeballos\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\szeballos\\Documents\\GitHub\\BridgedItServices-1\\BridgetItService\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\Administrador\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\szeballos\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -2293,9 +2293,9 @@
         "net6.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "C:\\Program Files\\dotnet\\library-packs": {},
-        "https://api.nuget.org/v3/index.json": {}
+        "https://api.nuget.org/v3/index.json": {},
+        "https://pkgs.dev.azure.com/masventasuy/gateway/_packaging/common/nuget/v3/index.json": {}
       },
       "frameworks": {
         "net6.0": {
@@ -2349,7 +2349,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.202\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.402\\RuntimeIdentifierGraph.json"
       }
     }
   }

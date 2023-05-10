@@ -7,6 +7,9 @@ using BridgetItService.Contracts;
 using BridgetItService.Services;
 using Microsoft.OpenApi.Models;
 using BridgetItService.Settings;
+using BridgetItService.MapperFactory;
+using BridgetItService.Models;
+using ShopifySharp;
 
 namespace BridgetItService
 {
@@ -23,8 +26,11 @@ namespace BridgetItService
         {
             // Add the IHttpClientFactory service
             services.AddHttpClient();
+            services.AddSingleton<ApiHandler>();
             services.AddSingleton<IInfinityPOSClient, InfinityPOSClient>();
-            services.AddSingleton<IShopifyService, ShopifyService>();
+            services.AddSingleton<IShopifyServiceAPI, ShopifyServiceAPI>();
+            services.AddSingleton<UpdateService>();
+            services.AddSingleton<IMap<InfinityPOSProduct, Product>, InfinityToShopifyProductMap>();
 
             services.AddMvc();
             services.AddControllers();

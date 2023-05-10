@@ -9,15 +9,20 @@ namespace BridgetItService.Controllers
     [ApiController]
     public class ShopifyController : ControllerBase
     {
-        private readonly IShopifyService _shopifyService;
-        public ShopifyController(IShopifyService shopifyService)
+        private readonly IShopifyServiceAPI _shopifyService;
+        public ShopifyController(IShopifyServiceAPI shopifyService)
         {
             _shopifyService = shopifyService;
         }
-        [HttpPost("/products")]
-        public async Task<IActionResult> PostProducts(ShopifyProductModleIn products)
+        //[HttpPost("/products")]
+        //public async Task<IActionResult> PostProducts(InfinityPosProducts products)
+        //{
+        //    return Ok(await _shopifyService.PublishProducts(products.Products);
+        //}
+
+        private IActionResult Ok(object v)
         {
-            return Ok(await _shopifyService.PublishProducts(products.Products));
+            throw new NotImplementedException();
         }
     }
 }

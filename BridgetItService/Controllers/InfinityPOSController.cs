@@ -9,8 +9,8 @@ namespace BridgetItService.Controllers
     public class InfinityPOSController : ControllerBase
     {
         private readonly IInfinityPOSClient _infinityPOSService;
-        private readonly IShopifyService _shopifyService;
-        public InfinityPOSController(IInfinityPOSClient infinityPOSService, IShopifyService shopifyService)
+        private readonly IShopifyServiceAPI _shopifyService;
+        public InfinityPOSController(IInfinityPOSClient infinityPOSService, IShopifyServiceAPI shopifyService)
         {
             _infinityPOSService = infinityPOSService;
             _shopifyService = shopifyService;
