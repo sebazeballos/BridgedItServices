@@ -20,10 +20,8 @@ namespace BridgetItService.Services
 
         public async Task UpdateShopifyAsync(DateTime time)
         {
-            //_shopifyService.GetTransacctions(time);
             var product = await _infinityPOSClient.GetProducts(time.ToString());
-            if (product != null)
-            {
+            if(product != null) { 
                 await _shopifyService.PublishProducts(product.Products);
             }
             await _shopifyService.PublishProducts(await _infinityPOSClient.AddStock(time.ToString())); 

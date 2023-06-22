@@ -1,6 +1,10 @@
 ﻿using Microsoft.Win32;
 using System.Fabric.Query;
 using System;
+using BridgetItService.Settings;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using System.Net.Http.Headers;
 
 namespace BridgetItService.Services
 {
@@ -8,22 +12,22 @@ namespace BridgetItService.Services
     {
         private readonly ApiHandler _apiHandler;
         private Timer _timer;
-
-        public UpdateService(ApiHandler apiHandler)
+        private readonly IOptions<IntervalMinutes> _options;
+        public UpdateService(ApiHandler apiHandler, IServiceProvider provider)
         {
+            _options = provider.GetService<IOptions<IntervalMinutes>>();
             _apiHandler = apiHandler;
         }
 
         public void Start()
         {
-            _timer = new Timer(async _ => await UpdateAsync(), null, TimeSpan.Zero, TimeSpan.FromMinutes(2));
+            _timer = new Timer(async _ => await UpdateAsync(), null, TimeSpan.Zero, TimeSpan.FromMinutes(_options.Value.Minutes));
         }
 
         private async Task UpdateAsync()
         {
             DateTime currentTime = DateTime.Now;
             await _apiHandler.UpdateShopifyAsync(currentTime);
-            //await _apiHandler.UpdateTriquestraInfinityPosAsync();
         }
 
         public void Dispose()

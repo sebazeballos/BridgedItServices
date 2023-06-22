@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Fabric.Query;
+using System.Text.Json;
+using System.Text;
 using BridgetItService.Contracts;
 using BridgetItService.Models;
 using ShopifySharp;
 using ShopifySharp.Filters;
+using Microsoft.Extensions.Options;
+using BridgetItService.Settings;
 
 namespace BridgetItService.Services
 {
@@ -12,18 +16,18 @@ namespace BridgetItService.Services
 
         private readonly IMap<InfinityPOSProduct, Product> _infinityToShopifyMap;
         private readonly IInfinityPOSClient _infinityPOSClient;
+        private readonly IOptions<ShopifySettings> _options;
         public ShopifyServiceAPI(IInfinityPOSClient infinityPOSClient, IServiceProvider serviceProvider)
         {
+            _options = serviceProvider.GetService<IOptions<ShopifySettings>>();
             _infinityPOSClient = infinityPOSClient;
             _infinityToShopifyMap = serviceProvider.GetService<IMap<InfinityPOSProduct, Product>>();
         }
         public async Task PublishProducts(IList<InfinityPOSProduct> products)
         {
-            var url = "bridged-it-services.myshopify.com";
-            var accessToken = "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";
             if (products != null)
             {
-                var service = new ProductService(url, accessToken);
+                var service = new ProductService(_options.Value.url, _options.Value.accessToken);
 
                 foreach (InfinityPOSProduct product in products)
                 {
@@ -40,12 +44,6 @@ namespace BridgetItService.Services
                                 FieldName = "Ecomm Code",
                                 FieldValue = response.Id.ToString()
                             });
-                            
-                            //product.CustomFields.Add(new CustomFields
-                            //{
-                            //    FieldName = "Web_Item",
-                            //    FieldValue = product.Updated.ToString()
-                            //});
                             await _infinityPOSClient.PutProductInInfinity(product); 
                         }
                         catch (Exception ex)
@@ -58,10 +56,6 @@ namespace BridgetItService.Services
                         try
                         {
                             await service.UpdateAsync(long.Parse(product.CustomFields.FirstOrDefault(cf => cf.FieldName == "Ecomm Code").FieldValue), shopifyProduct);
-
-                            //product.CustomFields.FirstOrDefault(cf => cf.FieldName == "Web_Item").FieldValue = product.Updated.ToString();
-
-                            //await _infinityPOSClient.PutProductInInfinity(product);
                         }
                         catch(Exception ex)
                         {
@@ -73,13 +67,11 @@ namespace BridgetItService.Services
             }
         }
 
-        public async Task PublishProduct(InfinityPOSProduct product)
+        public async Task PublishProduct(InfinityPOSProduct? product)
         {
-            var url = "bridged-it-services.myshopify.com";
-            var accessToken = "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";
             if (product != null)
             {
-                var service = new ProductService(url, accessToken);
+                var service = new ProductService(_options.Value.url, _options.Value.accessToken);
                 Product shopifyProduct = _infinityToShopifyMap.Map(product);
 
                 try
@@ -95,9 +87,7 @@ namespace BridgetItService.Services
         }
         public async Task GetTransacctions(DateTime time)
         {
-            var url = "bridged-it-services.myshopify.com";
-            var accessToken = "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";
-            var service = new TenderTransactionService(url, accessToken);
+            var service = new TenderTransactionService(_options.Value.url, _options.Value.accessToken);
             try
             {
                 var transactions = await service.ListAsync(new TenderTransactionListFilter
@@ -105,8 +95,9 @@ namespace BridgetItService.Services
                     ProcessedAtMax = time
                 });
                 var p = transactions;
+                var jsonString = JsonSerializer.Serialize(p.Items.FirstOrDefault());
             }
-            catch (Exception ex)
+            catch (ShopifyException ex)
             {
                 var msj = ex.InnerException;
             }

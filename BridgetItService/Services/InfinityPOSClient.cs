@@ -65,7 +65,6 @@ namespace BridgetItService.Services
             catch (HttpRequestException ex)
             {
                 return null;
-                //throw new ServiceException($"REQUEST {HttpMethods.Post} to {_options.Value.AuthorizationEndpoint} FAILD with body:", ex.ToString());
             }
         }
 
