@@ -29,6 +29,7 @@ namespace BridgetItService
             services.AddSingleton<ApiHandler>();
             services.AddSingleton<IInfinityPOSClient, InfinityPOSClient>();
             services.AddSingleton<IShopifyServiceAPI, ShopifyServiceAPI>();
+            services.AddSingleton<IMagentoService, MagentoService>();
             services.AddSingleton<UpdateService>();
             services.AddSingleton<IMap<InfinityPOSProduct, Product>, InfinityToShopifyProductMap>();
 

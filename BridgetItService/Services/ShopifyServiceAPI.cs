@@ -23,13 +23,13 @@ namespace BridgetItService.Services
             _infinityPOSClient = infinityPOSClient;
             _infinityToShopifyMap = serviceProvider.GetService<IMap<InfinityPOSProduct, Product>>();
         }
-        public async Task PublishProducts(IList<InfinityPOSProduct> products)
+        public async Task PublishProducts(InfinityPosProducts products)
         {
             if (products != null)
             {
                 var service = new ProductService(_options.Value.url, _options.Value.accessToken);
 
-                foreach (InfinityPOSProduct product in products)
+                foreach (InfinityPOSProduct product in products.Products)
                 {
                     Product shopifyProduct = _infinityToShopifyMap.Map(product);
                     if (product.CustomFields != null && product.CustomFields.Any(cf => cf.FieldName != "Ecomm Code"))
