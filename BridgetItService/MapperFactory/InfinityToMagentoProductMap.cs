@@ -19,7 +19,7 @@ namespace BridgetItService.MapperFactory
                     Name = product.Description,
                     TypeId = "simple",
                     Visibility = 4,
-                    Price = product.StandardSellingPrice,
+                    Price = 100000,
                     AttributeSetId = 4
                 });
             }

@@ -32,22 +32,34 @@ namespace BridgetItService.Services
         {
             if (products != null)
             {
-                try
+                
+                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuth());
+                MagentoProducts magentoProducts = _infinityToMagentoProductMap.Map(products);
+                foreach (MagentoProduct product in magentoProducts.Product)
                 {
-                    _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuth());
-                    MagentoProducts magentoProducts = _infinityToMagentoProductMap.Map(products);
-                    foreach (MagentoProduct product in magentoProducts.Product)
+                    MagentoRequest request = new MagentoRequest();
+                    request.Product = product;
+                    var body = SerializeBody(request);
+                    try
                     {
-                        MagentoRequest request = new MagentoRequest();
-                        request.Product = product;
-                        var body = SerializeBody(request);
                         var response = await _client.PostAsync($"{_options.Value.BaseUrl + _options.Value.CreateProduct}", body);
                         response.EnsureSuccessStatusCode();
                     }
-                }
-                catch (Exception ex)
-                {
-                    //Log a exception
+                    catch (HttpRequestException ex)
+                    {
+                        if (ex.StatusCode == HttpStatusCode.BadRequest)
+                        {
+                            try
+                            {
+                                var response = await _client.PutAsync($"{_options.Value.BaseUrl + _options.Value.CreateProduct}" + request.Product.Sku, body);
+                                response.EnsureSuccessStatusCode();
+                            }
+                            catch (HttpRequestException ex2)
+                            {
+                                //log exception
+                            }
+                        }
+                    }
                 }
             }
         }

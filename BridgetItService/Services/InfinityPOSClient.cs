@@ -100,7 +100,7 @@ namespace BridgetItService.Services
                 if (long.TryParse(inventory.ProductCode, out var productCode))
                 {
                     var product = await GetProduct(productCode);
-                    if(inventory.SellableQuantity.Equals(0.0000)){
+                    if(inventory.SellableQuantity == 0){
                         product.SellableQuantity = 0;
                     }
                     else
