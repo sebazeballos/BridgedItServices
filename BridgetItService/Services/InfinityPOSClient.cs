@@ -80,6 +80,7 @@ namespace BridgetItService.Services
                 var content = await response.Content.ReadAsStringAsync();
                 var inventories = Deserialize<InventoryResponse>(content);
                 InfinityPosProducts products = new InfinityPosProducts();
+                products.Products = new List<InfinityPOSProduct>();
                 foreach (var inventory in inventories.Inventory)
                 {
                     products.Products.Add(await UpdateInventory(inventory));
@@ -96,20 +97,12 @@ namespace BridgetItService.Services
         {
             try
             {
-                
-                if (long.TryParse(inventory.ProductCode, out var productCode))
+                var product = await GetProduct(inventory.ProductCode);
+                if (product != null)
                 {
-                    var product = await GetProduct(productCode);
-                    if(inventory.SellableQuantity == 0){
-                        product.SellableQuantity = 0;
-                    }
-                    else
-                    {
-                        product.SellableQuantity = Convert.ToInt64(inventory.SellableQuantity);
-                    }
-                    return product;
+                    product.SellableQuantity = Convert.ToInt64(inventory.SellableQuantity);
                 }
-                return null;
+                return product;
             }
             catch (HttpRequestException ex)
             {
@@ -117,7 +110,7 @@ namespace BridgetItService.Services
             }
         }
 
-        public async Task<InfinityPOSProduct> GetProduct(long productCode)
+        public async Task<InfinityPOSProduct> GetProduct(string productCode)
         {
             try
             {

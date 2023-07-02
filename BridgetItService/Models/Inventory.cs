@@ -3,6 +3,6 @@
     public class Inventory
     {
         public string ProductCode { get; set; }
-        public int SellableQuantity { get; set; }
+        public double SellableQuantity { get; set; }
     }
 }

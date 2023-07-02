@@ -32,7 +32,6 @@ namespace BridgetItService.Services
         {
             if (products != null)
             {
-                
                 _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuth());
                 MagentoProducts magentoProducts = _infinityToMagentoProductMap.Map(products);
                 foreach (MagentoProduct product in magentoProducts.Product)
@@ -73,8 +72,7 @@ namespace BridgetItService.Services
             var credentials = SerializeBody(auth);
             var response = await _client.PostAsync($"{_options.Value.BaseUrl + _options.Value.AuthUrl}", credentials);
             response.EnsureSuccessStatusCode();
-            var a = Deserialize<string>(await response.Content.ReadAsStringAsync());
-            return a;
+            return Deserialize<string>(await response.Content.ReadAsStringAsync());
         }
 
         private HttpContent SerializeBody(object body)
