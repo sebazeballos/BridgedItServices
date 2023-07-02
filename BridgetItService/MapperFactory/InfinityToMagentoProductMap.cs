@@ -19,8 +19,15 @@ namespace BridgetItService.MapperFactory
                     Name = product.Description,
                     TypeId = "simple",
                     Visibility = 4,
-                    Price = 100000,
-                    AttributeSetId = 4
+                    Price = product.StandardSellingPrice,
+                    AttributeSetId = 4,
+                    ExtensionAttributes = new ExtensionAttributes { 
+                                                        StockItem = new StockItem
+                                                        {
+                                                            IsInStock = true,
+                                                            Qty = product.SellableQuantity.ToString() 
+                                                        }
+                                                    }
                 });
             }
             return magentoProducts;
