@@ -1,4 +1,4 @@
-﻿using BridgetItService.Models;
+﻿using BridgetItService.Models.Inifnity;
 using ShopifySharp;
 
 namespace BridgetItService.Contracts

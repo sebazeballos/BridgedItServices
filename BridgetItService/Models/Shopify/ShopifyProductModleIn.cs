@@ -1,6 +1,6 @@
 ﻿using ShopifySharp;
 
-namespace BridgetItService.Models
+namespace BridgetItService.Models.Shopify
 {
     public class ShopifyProductModleIn
     {

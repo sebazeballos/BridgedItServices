@@ -6,5 +6,6 @@
         public string ClientSecret { get; set; }
         public string AuthorizationEndpoint { get; set; }
         public string BaseEndpoint { get; set; }
+        public string PostInvoicesEndpoint { get; set; }
     }
 }

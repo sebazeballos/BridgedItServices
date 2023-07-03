@@ -8,8 +8,8 @@ using BridgetItService.Services;
 using Microsoft.OpenApi.Models;
 using BridgetItService.Settings;
 using BridgetItService.MapperFactory;
-using BridgetItService.Models;
 using ShopifySharp;
+using BridgetItService.Models.Inifnity;
 
 namespace BridgetItService
 {

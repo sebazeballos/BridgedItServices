@@ -1,4 +1,4 @@
-﻿namespace BridgetItService.Models
+﻿namespace BridgetItService.Models.Magento
 {
     public class MagentoRequest
     {

@@ -3,11 +3,11 @@ using System.Fabric.Query;
 using System.Text.Json;
 using System.Text;
 using BridgetItService.Contracts;
-using BridgetItService.Models;
 using ShopifySharp;
 using ShopifySharp.Filters;
 using Microsoft.Extensions.Options;
 using BridgetItService.Settings;
+using BridgetItService.Models.Inifnity;
 
 namespace BridgetItService.Services
 {

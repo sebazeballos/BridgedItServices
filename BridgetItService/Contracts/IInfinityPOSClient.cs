@@ -1,4 +1,4 @@
-﻿using BridgetItService.Models;
+﻿using BridgetItService.Models.Inifnity;
 using ShopifySharp;
 
 namespace BridgetItService.Contracts
@@ -9,5 +9,6 @@ namespace BridgetItService.Contracts
         Task<InfinityPosProducts> GetProducts(string startDate);
         Task PutProductInInfinity(InfinityPOSProduct product);
         Task<InfinityPosProducts> AddStock(string startDate);
+        Task PostTransaction(Invoice invoice);
     }
 }

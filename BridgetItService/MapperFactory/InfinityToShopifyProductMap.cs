@@ -1,5 +1,5 @@
 ﻿using BridgetItService.Contracts;
-using BridgetItService.Models;
+using BridgetItService.Models.Inifnity;
 using ShopifySharp;
 
 namespace BridgetItService.MapperFactory
@@ -9,7 +9,6 @@ namespace BridgetItService.MapperFactory
         
         public Product Map(InfinityPOSProduct infinityPOSProduct)
         {
-
             return new Product
             {
                 Title = infinityPOSProduct.Description,

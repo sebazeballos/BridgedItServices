@@ -1,8 +1,8 @@
-﻿namespace BridgetItService.Models
+﻿namespace BridgetItService.Models.Inifnity
 {
     public class InfinityPOSProduct
     {
-        public string ProductCode { get; set; } 
+        public string ProductCode { get; set; }
         public DateTime Created { get; set; }
         public DateTime Updated { get; set; }
         public string Description { get; set; }

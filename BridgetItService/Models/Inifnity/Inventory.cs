@@ -1,4 +1,4 @@
-﻿namespace BridgetItService.Models
+﻿namespace BridgetItService.Models.Inifnity
 {
     public class Inventory
     {

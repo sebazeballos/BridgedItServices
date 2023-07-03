@@ -1,5 +1,7 @@
 ﻿using BridgetItService.Contracts;
 using BridgetItService.Models;
+using BridgetItService.Models.Inifnity;
+using BridgetItService.Models.Magento;
 using ShopifySharp;
 
 namespace BridgetItService.MapperFactory

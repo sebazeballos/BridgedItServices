@@ -1,6 +1,7 @@
 ﻿using BridgetItService.Contracts;
 using BridgetItService.MapperFactory;
-using BridgetItService.Models;
+using BridgetItService.Models.Inifnity;
+using BridgetItService.Models.Magento;
 using ShopifySharp;
 
 namespace BridgetItService.Settings
@@ -19,6 +20,7 @@ namespace BridgetItService.Settings
 
             services.AddSingleton<IMap<InfinityPOSProduct, Product>, InfinityToShopifyProductMap>();
             services.AddSingleton<IMap<InfinityPosProducts, MagentoProducts>, InfinityToMagentoProductMap>();
+            services.AddSingleton<IMap<MagentoOrder, Invoice>, MagentoTransactionsMap>();
         }
     }
 }

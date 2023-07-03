@@ -1,5 +1,6 @@
 using BridgetItService.Contracts;
-using BridgetItService.Models;
+using BridgetItService.Models.Inifnity;
+using BridgetItService.Models.Magento;
 using BridgetItService.Settings;
 using Microsoft.Extensions.Options;
 using Microsoft.ServiceFabric.Services.Communication;
@@ -148,6 +149,27 @@ namespace BridgetItService.Services
             catch (HttpRequestException ex)
             {
                 throw new ServiceException($"REQUEST {HttpMethods.Put} to {_options.Value.BaseEndpoint} /products?site_specific_override=always FAILD with body:", ex.Data.ToString());
+            }
+        }
+        public async Task PostTransaction(Invoice invoice)
+        {
+
+            try
+            {
+                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuthentication());
+                _client.DefaultRequestHeaders.Add("x-request-id", Guid.NewGuid().ToString());
+                _client.DefaultRequestHeaders.Add("x-logging-id", Guid.NewGuid().ToString());
+                _client.DefaultRequestHeaders.Add("user-agent", "Infinity API Synchronisation Service");
+                var infinityInvoices = SerializeBody(invoice);
+                var response = await _client.PostAsync(_options.Value.BaseEndpoint + _options.Value.PostInvoicesEndpoint, infinityInvoices);
+
+                response.EnsureSuccessStatusCode();
+
+                var content = await response.Content.ReadAsStringAsync();
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new ServiceException($"REQUEST {HttpMethods.Put} to {_options.Value.BaseEndpoint}/products?site_specific_override=always FAILD with body:", ex.Data.ToString());
             }
         }
 
