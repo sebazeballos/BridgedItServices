@@ -18,6 +18,7 @@ namespace BridgetItService.Services
         private readonly IMap<InfinityPosProducts, MagentoProducts> _infinityToMagentoProductMap;
         private readonly IInfinityPOSClient _infinityPOSClient;
         private readonly IMap<MagentoOrder, Invoice> _magentoTransactionsMap;
+        private readonly IMap<MagentoRefund, Invoice> _magentoRefundMap;
         private readonly HttpClient _client;
         private readonly string MEDIA_TYPE = "application/json";
         public MagentoService(IServiceProvider serviceProvider, IInfinityPOSClient infinityPOSClient)
@@ -31,6 +32,7 @@ namespace BridgetItService.Services
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(MEDIA_TYPE));
             _infinityToMagentoProductMap = serviceProvider.GetService<IMap<InfinityPosProducts, MagentoProducts>>();
             _magentoTransactionsMap = serviceProvider.GetService<IMap<MagentoOrder, Invoice>>();
+            _magentoRefundMap = serviceProvider.GetService<IMap<MagentoRefund, Invoice>>();
             _infinityPOSClient = infinityPOSClient;
         }
         public async Task PublishProducts(InfinityPosProducts products)
@@ -101,8 +103,8 @@ namespace BridgetItService.Services
                 var response = await _client.GetAsync($"{_options.Value.BaseUrl + _options.Value.Orders + parameters}");
                 response.EnsureSuccessStatusCode();
                 var content = await response.Content.ReadAsStringAsync();
-                var magentoOrder = Deserialize<MagentoOrder>(content);
-                Invoice invoice = _magentoRe.Map(magentoOrder);
+                var magentoRefund = Deserialize<MagentoRefund>(content);
+                Invoice invoice = _magentoRefundMap.Map(magentoRefund);
                 await _infinityPOSClient.PostTransaction(invoice);
             }
             catch (HttpRequestException ex) { }

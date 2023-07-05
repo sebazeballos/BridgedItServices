@@ -46,8 +46,8 @@ namespace BridgetItService.Services
                 return auth.accessToken;
             }
             catch (HttpRequestException ex) {
-
-                throw new ServiceException($"REQUEST {HttpMethods.Post} to {_options.Value.AuthorizationEndpoint} FAILD with body: {formData}", ex.ToString());
+                return null;
+                //throw new ServiceException($"REQUEST {HttpMethods.Post} to {_options.Value.AuthorizationEndpoint} FAILD with body: {formData}", ex.ToString());
             }
         }
 
@@ -61,7 +61,7 @@ namespace BridgetItService.Services
 
                 var content = await response.Content.ReadAsStringAsync();
                 var products = Deserialize<InfinityPosProducts>(content);
-                return products;
+               return products;
             }
             catch (HttpRequestException ex)
             {
@@ -148,7 +148,7 @@ namespace BridgetItService.Services
             }
             catch (HttpRequestException ex)
             {
-                throw new ServiceException($"REQUEST {HttpMethods.Put} to {_options.Value.BaseEndpoint} /products?site_specific_override=always FAILD with body:", ex.Data.ToString());
+                //throw new ServiceException($"REQUEST {HttpMethods.Put} to {_options.Value.BaseEndpoint} /products?site_specific_override=always FAILD with body:", ex.Data.ToString());
             }
         }
         public async Task PostTransaction(Invoice invoice)
@@ -169,7 +169,7 @@ namespace BridgetItService.Services
             }
             catch (HttpRequestException ex)
             {
-                throw new ServiceException($"REQUEST {HttpMethods.Put} to {_options.Value.BaseEndpoint}/products?site_specific_override=always FAILD with body:", ex.Data.ToString());
+                //throw new ServiceException($"REQUEST {HttpMethods.Put} to {_options.Value.BaseEndpoint}/products?site_specific_override=always FAILD with body:", ex.Data.ToString());
             }
         }
 

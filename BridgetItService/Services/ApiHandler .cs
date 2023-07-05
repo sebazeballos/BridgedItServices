@@ -35,8 +35,8 @@ namespace BridgetItService.Services
             {
                 await _magentoService.PublishProducts(products);
                 await _magentoService.PublishProducts(await _infinityPOSClient.AddStock(checkTime));
-                await _magentoService.GetOrders();
-                await _magentoService.GetRefunds();
+                await _magentoService.GetOrders(checkTime);
+                await _magentoService.GetRefunds(checkTime);
             }
         }
     }
