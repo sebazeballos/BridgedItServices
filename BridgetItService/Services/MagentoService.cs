@@ -67,12 +67,13 @@ namespace BridgetItService.Services
                 }
             }
         }
-        public async Task GetOrders()
+        public async Task GetOrders(string startDate)
         {
+            var endDate = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             var parameters = "?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=complete" +
                 "&searchCriteria[filter_groups][0][filters][0][condition_type]=eq&searchCriteria[filter_groups][1][filters][0][field]=created_at&searchCriteria[filter_groups]" +
-                "[1][filters][0][value]=2023-07-2T00:00:00Z&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq&searchCriteria[filter_groups][2][filters][0][field]=created_at" +
-                "&searchCriteria[filter_groups][2][filters][0][value]=2023-07-30T18:00:00Z&searchCriteria[filter_groups][2][filters][0][condition_type]=lteq";
+                $"[1][filters][0][value]={startDate}&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq&searchCriteria[filter_groups][2][filters][0][field]=created_at" +
+                $"&searchCriteria[filter_groups][2][filters][0][value]={endDate}&searchCriteria[filter_groups][2][filters][0][condition_type]=lteq";
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuth());
             
             try
@@ -82,6 +83,26 @@ namespace BridgetItService.Services
                 var content = await response.Content.ReadAsStringAsync();
                 var magentoOrder = Deserialize<MagentoOrder>(content);
                 Invoice invoice = _magentoTransactionsMap.Map(magentoOrder);
+                await _infinityPOSClient.PostTransaction(invoice);
+            }
+            catch (HttpRequestException ex) { }
+        }
+        public async Task GetRefunds(string startDate)
+        {
+            var endDate = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+            var parameters = "?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=closed" +
+                "&searchCriteria[filter_groups][0][filters][0][condition_type]=eq&searchCriteria[filter_groups][1][filters][0][field]=created_at&searchCriteria[filter_groups]" +
+                $"[1][filters][0][value]={startDate}&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq&searchCriteria[filter_groups][2][filters][0][field]=created_at" +
+                $"&searchCriteria[filter_groups][2][filters][0][value]={endDate}&searchCriteria[filter_groups][2][filters][0][condition_type]=lteq";
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuth());
+
+            try
+            {
+                var response = await _client.GetAsync($"{_options.Value.BaseUrl + _options.Value.Orders + parameters}");
+                response.EnsureSuccessStatusCode();
+                var content = await response.Content.ReadAsStringAsync();
+                var magentoOrder = Deserialize<MagentoOrder>(content);
+                Invoice invoice = _magentoRe.Map(magentoOrder);
                 await _infinityPOSClient.PostTransaction(invoice);
             }
             catch (HttpRequestException ex) { }

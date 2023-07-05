@@ -6,5 +6,6 @@ namespace BridgetItService.Contracts
     {
         public Task PublishProducts(InfinityPosProducts products);
         public Task GetOrders();
+        public Task GetRefunds();
     }
 }

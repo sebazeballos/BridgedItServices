@@ -4,6 +4,8 @@
     {
         public string Method { get; set; }
         public double AmountOrdered { get; set; }
-        public int ShippingAmount { get; set; }
+        public double ShippingAmount { get; set; }
+        public double AmountRefunded { get; set; }
+        public double ShippingRefunded { get; set; }
     }
 }

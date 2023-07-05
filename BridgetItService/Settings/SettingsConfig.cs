@@ -21,6 +21,7 @@ namespace BridgetItService.Settings
             services.AddSingleton<IMap<InfinityPOSProduct, Product>, InfinityToShopifyProductMap>();
             services.AddSingleton<IMap<InfinityPosProducts, MagentoProducts>, InfinityToMagentoProductMap>();
             services.AddSingleton<IMap<MagentoOrder, Invoice>, MagentoTransactionsMap>();
+            services.AddSingleton<IMap<MagentoRefund, Invoice>, MagentoRefundsMapping>();
         }
     }
 }
