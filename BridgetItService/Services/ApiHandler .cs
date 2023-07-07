@@ -39,5 +39,12 @@ namespace BridgetItService.Services
                 await _magentoService.GetRefunds(checkTime);
             }
         }
+
+        public async Task SyncronizePlatformsAsync(DateTime time)
+        {
+            var checkTime = time.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+            var products = await _infinityPOSClient.GetProducts(checkTime);
+            await _magentoService.PublishProducts(await _infinityPOSClient.AddStock(products, checkTime));
+        }
     }
 }

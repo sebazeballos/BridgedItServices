@@ -69,7 +69,7 @@ namespace BridgetItService.Services
             }
         }
 
-        public async Task<InfinityPosProducts> AddStock(string startDate)
+        public async Task<InfinityPosProducts> AddStock(InfinityPosProducts products, string startDate)
         {
             try
             {
@@ -80,11 +80,15 @@ namespace BridgetItService.Services
 
                 var content = await response.Content.ReadAsStringAsync();
                 var inventories = Deserialize<InventoryResponse>(content);
-                InfinityPosProducts products = new InfinityPosProducts();
-                products.Products = new List<InfinityPOSProduct>();
                 foreach (var inventory in inventories.Inventory)
                 {
-                    products.Products.Add(await UpdateInventory(inventory));
+                    foreach (InfinityPOSProduct product in products.Products)
+                    {
+                        if (product.ProductCode == inventory.ProductCode)
+                        {
+                            products.Products.Add(await UpdateInventory(inventory));
+                        }
+                    }
                 }
                 return products;
             }

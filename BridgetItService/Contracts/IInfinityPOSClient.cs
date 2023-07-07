@@ -8,7 +8,7 @@ namespace BridgetItService.Contracts
         Task<string> GetAuthentication();
         Task<InfinityPosProducts> GetProducts(string startDate);
         Task PutProductInInfinity(InfinityPOSProduct product);
-        Task<InfinityPosProducts> AddStock(string startDate);
+        Task<InfinityPosProducts> AddStock(InfinityPosProducts products, string startDate);
         Task PostTransaction(Invoice invoice);
     }
 }
