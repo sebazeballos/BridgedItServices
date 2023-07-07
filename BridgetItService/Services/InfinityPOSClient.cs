@@ -86,7 +86,7 @@ namespace BridgetItService.Services
                     {
                         if (product.ProductCode == inventory.ProductCode)
                         {
-                            products.Products.Add(await UpdateInventory(inventory));
+                            product.SellableQuantity = Convert.ToInt64(inventory.SellableQuantity);
                         }
                     }
                 }
@@ -97,43 +97,6 @@ namespace BridgetItService.Services
                 return null;
                 //throw new ServiceException($"REQUEST {HttpMethods.Post} to {_options.Value.AuthorizationEndpoint} FAILD with body:", ex.ToString());
             }
-        }
-        public async Task<InfinityPOSProduct?> UpdateInventory(Inventory inventory)
-        {
-            try
-            {
-                var product = await GetProduct(inventory.ProductCode);
-                if (product != null)
-                {
-                    product.SellableQuantity = Convert.ToInt64(inventory.SellableQuantity);
-                }
-                return product;
-            }
-            catch (HttpRequestException ex)
-            {
-                return null;
-            }
-        }
-
-        public async Task<InfinityPOSProduct> GetProduct(string productCode)
-        {
-            try
-            {
-                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuthentication());
-                var response = await _client.GetAsync($"{_options.Value.BaseEndpoint}/products/{productCode}");
-
-                response.EnsureSuccessStatusCode();
-
-                var content = await response.Content.ReadAsStringAsync();
-                var product = Deserialize<InfinityPOSProduct>(content);
-                return product;
-            }
-            catch (HttpRequestException ex)
-            {
-                return null;
-                //throw new ServiceException($"REQUEST {HttpMethods.Post} to {_options.Value.AuthorizationEndpoint} FAILD with body:", ex.ToString());
-            }
-            
         }
 
         public async Task PutProductInInfinity (InfinityPOSProduct product)
