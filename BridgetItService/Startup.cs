@@ -35,7 +35,7 @@ namespace BridgetItService
 
             services.AddLogging((logging) =>
             {
-                logging.AddAWSProvider();
+                logging.AddAWSProvider(Configuration.GetAWSLoggingConfigSection());
             });
 
             services.AddMvc();
