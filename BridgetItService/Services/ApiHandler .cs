@@ -14,13 +14,14 @@ namespace BridgetItService.Services
         private readonly IShopifyServiceAPI _shopifyService;
         private readonly IMagentoService _magentoService;
         private readonly IOptions<EcommerceSettings> _options;
-
-        public ApiHandler(IInfinityPOSClient infinityPOSClient, IShopifyServiceAPI shopifyService, IServiceProvider serviceProvider, IMagentoService magentoService)
+        private readonly ILogger<ApiHandler> _logger;
+        public ApiHandler(IInfinityPOSClient infinityPOSClient, IShopifyServiceAPI shopifyService, IServiceProvider serviceProvider, IMagentoService magentoService, ILogger<ApiHandler> logger)
         {
             _options = serviceProvider.GetService<IOptions<EcommerceSettings>>();
             _infinityPOSClient = infinityPOSClient;
             _shopifyService = shopifyService;
             _magentoService = magentoService;
+            _logger = logger;
         }
 
         public async Task UpdateShopifyAsync(DateTime time)
