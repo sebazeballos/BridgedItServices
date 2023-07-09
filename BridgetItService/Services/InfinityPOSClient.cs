@@ -1,12 +1,11 @@
 using BridgetItService.Contracts;
 using BridgetItService.Models.Inifnity;
-using BridgetItService.Models.Magento;
 using BridgetItService.Settings;
 using Microsoft.Extensions.Options;
-using Microsoft.ServiceFabric.Services.Communication;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Linq;
 
 namespace BridgetItService.Services
 {
@@ -80,7 +79,12 @@ namespace BridgetItService.Services
 
                 var content = await response.Content.ReadAsStringAsync();
                 var inventories = Deserialize<InventoryResponse>(content);
-                foreach (var inventory in inventories.Inventory)
+                var onlyLastUpdated = inventories.Inventory.GroupBy(p => p.ProductCode)
+                               .Select(g => g.OrderByDescending(p => DateTime.Parse(p.Updated))
+                                            .First())
+                               .ToList();
+
+                foreach (var inventory in onlyLastUpdated)
                 {
                     foreach (InfinityPOSProduct product in products.Products)
                     {

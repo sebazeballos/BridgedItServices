@@ -27,14 +27,15 @@ namespace BridgetItService.Services
         {
             var checkTime = time.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             var products = await _infinityPOSClient.GetProducts(checkTime);
-            if (_options.Value.Type == "2") {
+            if (_options.Value.Type == "2")
+            {
                 await _shopifyService.PublishProducts(products);
-                await _shopifyService.PublishProducts(await _infinityPOSClient.AddStock(checkTime));
+                //await _shopifyService.PublishProducts(await _infinityPOSClient.AddStock(checkTime));
             }
             else
             {
                 await _magentoService.PublishProducts(products);
-                await _magentoService.PublishProducts(await _infinityPOSClient.AddStock(checkTime));
+                //await _magentoService.PublishProducts(await _infinityPOSClient.AddStock(checkTime));
                 await _magentoService.GetOrders(checkTime);
                 await _magentoService.GetRefunds(checkTime);
             }
