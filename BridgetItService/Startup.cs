@@ -33,6 +33,11 @@ namespace BridgetItService
             services.AddSingleton<UpdateService>();
             services.AddSingleton<IMap<InfinityPOSProduct, Product>, InfinityToShopifyProductMap>();
 
+            services.AddLogging((logging) =>
+            {
+                logging.AddAWSProvider();
+            });
+
             services.AddMvc();
             services.AddControllers();
             services.AddSettingsConfig(Configuration);
@@ -60,6 +65,11 @@ namespace BridgetItService
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "API de BridgetIt V1");
                 });
             }
+
+            var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddAWSProvider();
+            });
 
 
             app.UseRouting();

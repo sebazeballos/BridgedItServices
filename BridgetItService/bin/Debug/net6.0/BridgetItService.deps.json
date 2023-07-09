@@ -8,6 +8,7 @@
     ".NETCoreApp,Version=v6.0": {
       "BridgetItService/1.0.0": {
         "dependencies": {
+          "AWS.Logger.AspNetCore": "3.3.0",
           "Microsoft.EntityFrameworkCore": "7.0.7",
           "Microsoft.EntityFrameworkCore.Tools": "7.0.7",
           "Microsoft.ServiceFabric.Services": "6.1.1583",
@@ -18,6 +19,50 @@
         },
         "runtime": {
           "BridgetItService.dll": {}
+        }
+      },
+      "AWS.Logger.AspNetCore/3.3.0": {
+        "dependencies": {
+          "AWS.Logger.Core": "3.1.0",
+          "Microsoft.Extensions.Configuration": "2.1.0",
+          "Microsoft.Extensions.DependencyInjection": "7.0.0",
+          "Microsoft.Extensions.Logging": "7.0.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/AWS.Logger.AspNetCore.dll": {
+            "assemblyVersion": "3.3.0.0",
+            "fileVersion": "3.3.0.0"
+          }
+        }
+      },
+      "AWS.Logger.Core/3.1.0": {
+        "dependencies": {
+          "AWSSDK.CloudWatchLogs": "3.7.0.5"
+        },
+        "runtime": {
+          "lib/netstandard2.0/AWS.Logger.Core.dll": {
+            "assemblyVersion": "3.1.0.0",
+            "fileVersion": "3.1.0.0"
+          }
+        }
+      },
+      "AWSSDK.CloudWatchLogs/3.7.0.5": {
+        "dependencies": {
+          "AWSSDK.Core": "3.7.0.6"
+        },
+        "runtime": {
+          "lib/netcoreapp3.1/AWSSDK.CloudWatchLogs.dll": {
+            "assemblyVersion": "3.3.0.0",
+            "fileVersion": "3.7.0.5"
+          }
+        }
+      },
+      "AWSSDK.Core/3.7.0.6": {
+        "runtime": {
+          "lib/netcoreapp3.1/AWSSDK.Core.dll": {
+            "assemblyVersion": "3.3.0.0",
+            "fileVersion": "3.7.0.6"
+          }
         }
       },
       "Humanizer.Core/2.14.1": {
@@ -108,6 +153,11 @@
             "assemblyVersion": "7.0.0.0",
             "fileVersion": "7.0.22.51805"
           }
+        }
+      },
+      "Microsoft.Extensions.Configuration/2.1.0": {
+        "dependencies": {
+          "Microsoft.Extensions.Configuration.Abstractions": "7.0.0"
         }
       },
       "Microsoft.Extensions.Configuration.Abstractions/7.0.0": {
@@ -725,6 +775,34 @@
       "serviceable": false,
       "sha512": ""
     },
+    "AWS.Logger.AspNetCore/3.3.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-iOvXAfPfmZZ/WdOasrZVznDp76PskEd9JyVswe1c01PwkuNj2qm7EueHJmEOwdgqc3bj5jW1TIIqXnthRryGwA==",
+      "path": "aws.logger.aspnetcore/3.3.0",
+      "hashPath": "aws.logger.aspnetcore.3.3.0.nupkg.sha512"
+    },
+    "AWS.Logger.Core/3.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ruKBNASE/IBnVZhyeUy0ueuxq1CuMtDHNpU2cqGUg12SxvClkqqY/PVXyM6I4ltsMh/1tF8WdpTBj9k3Fw/PgA==",
+      "path": "aws.logger.core/3.1.0",
+      "hashPath": "aws.logger.core.3.1.0.nupkg.sha512"
+    },
+    "AWSSDK.CloudWatchLogs/3.7.0.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-E9mEMaCVStnkzrs2gb35AbMz8xEGCqMGSnk+yyFJbkmdu9a+w5MVsuwRMkHbqiKn1bs5FTpdQJlV/NtgSYeHbA==",
+      "path": "awssdk.cloudwatchlogs/3.7.0.5",
+      "hashPath": "awssdk.cloudwatchlogs.3.7.0.5.nupkg.sha512"
+    },
+    "AWSSDK.Core/3.7.0.6": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-2oHC7TTLUjwVIvyS3CmCGvDPpgfrm/2FrjRwB/jUPEGreHpGkvTZHgcWbiD9QkLx1BLWJMpP+jww7CXbTuZZXQ==",
+      "path": "awssdk.core/3.7.0.6",
+      "hashPath": "awssdk.core.3.7.0.6.nupkg.sha512"
+    },
     "Humanizer.Core/2.14.1": {
       "type": "package",
       "serviceable": true,
@@ -794,6 +872,13 @@
       "sha512": "sha512-xpidBs2KCE2gw1JrD0quHE72kvCaI3xFql5/Peb2GRtUuZX+dYPoK/NTdVMiM67Svym0M0Df9A3xyU0FbMQhHw==",
       "path": "microsoft.extensions.caching.memory/7.0.0",
       "hashPath": "microsoft.extensions.caching.memory.7.0.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Configuration/2.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-SS8ce1GYQTkZoOq5bskqQ+m7xiXQjnKRiGfVNZkkX2SX0HpXNRsKnSUaywRRuCje3v2KT9xeacsM3J9/G2exsQ==",
+      "path": "microsoft.extensions.configuration/2.1.0",
+      "hashPath": "microsoft.extensions.configuration.2.1.0.nupkg.sha512"
     },
     "Microsoft.Extensions.Configuration.Abstractions/7.0.0": {
       "type": "package",

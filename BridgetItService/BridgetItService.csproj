@@ -28,6 +28,7 @@
 	<PackageReference Include="ShopifySharp" Version="6.0.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
     <PackageReference Include="System.Linq" Version="4.3.0" />
+    <PackageReference Include="AWS.Logger.AspNetCore" Version="3.3.0" />
   </ItemGroup>
 
 </Project>
