@@ -79,16 +79,13 @@ namespace BridgetItService.Services
 
                 var content = await response.Content.ReadAsStringAsync();
                 var inventories = Deserialize<InventoryResponse>(content);
-                var onlyLastUpdated = inventories.Inventory.GroupBy(p => p.ProductCode)
-                               .Select(g => g.OrderByDescending(p => DateTime.Parse(p.Updated))
-                                            .First())
-                               .ToList();
+                var onlyLastUpdated = inventories.Inventory.Where(inv => inv.SiteCode == 1).ToList();
 
                 foreach (var inventory in onlyLastUpdated)
                 {
                     foreach (InfinityPOSProduct product in products.Products)
                     {
-                        if (product.ProductCode == inventory.ProductCode)
+                        if (inventory.SellableQuantity > 0)
                         {
                             product.SellableQuantity = Convert.ToInt64(inventory.SellableQuantity);
                         }
