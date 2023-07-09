@@ -30,7 +30,7 @@ namespace BridgetItService.Controllers
         {
             if (DateTime.TryParse(startDate, out DateTime parsedStartDate))
             {
-                await _apiHandler.UpdateShopifyAsync(parsedStartDate);
+                await _apiHandler.SyncronizePlatformsAsync(parsedStartDate);
             }
             return Ok($"the date is {startDate}");
         }
