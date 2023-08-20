@@ -3,7 +3,7 @@
     public class MagentoProduct
     {
         public string Sku { get; set; }
-        public string Name { get; set; }
+        public string? Name { get; set; }
         public string TypeId { get; set; }
         public int Visibility { get; set; }
         public decimal Price { get; set; }

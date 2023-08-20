@@ -19,6 +19,8 @@ namespace BridgetItService.Settings
             services.Configure<MagentoSettings>(configuration.GetSection("MagentoSettings"));
 
             services.AddSingleton<IMap<InfinityPOSProduct, Product>, InfinityToShopifyProductMap>();
+
+            services.AddSingleton<IMap<MagentoProduct, PutMagentoProduct>, PostToPutProductRequestMap>();
             services.AddSingleton<IMap<InfinityPosProducts, MagentoProducts>, InfinityToMagentoProductMap>();
             services.AddSingleton<IMap<MagentoOrder, Invoice>, MagentoTransactionsMap>();
             services.AddSingleton<IMap<MagentoRefund, Invoice>, MagentoRefundsMapping>();

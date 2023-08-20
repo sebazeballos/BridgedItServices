@@ -44,7 +44,7 @@ namespace BridgetItService.Services
                                 FieldName = "Ecomm Code",
                                 FieldValue = response.Id.ToString()
                             });
-                            await _infinityPOSClient.PutProductInInfinity(product); 
+                            //await _infinityPOSClient.PutProductInInfinity(product); 
                         }
                         catch (Exception ex)
                         {

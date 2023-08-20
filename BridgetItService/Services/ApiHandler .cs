@@ -27,26 +27,33 @@ namespace BridgetItService.Services
         public async Task UpdateShopifyAsync(DateTime time)
         {
             var checkTime = time.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-            var products = await _infinityPOSClient.GetProducts(checkTime);
-            if (_options.Value.Type == "2")
+            if (_options.Value.Type != "0")
             {
-                await _shopifyService.PublishProducts(products);
-                //await _shopifyService.PublishProducts(await _infinityPOSClient.AddStock(checkTime));
-            }
-            else
-            {
-                await _magentoService.PublishProducts(products);
-                await _magentoService.PublishProducts(await _infinityPOSClient.AddStock(products, checkTime));
-                await _magentoService.GetOrders(checkTime);
-                await _magentoService.GetRefunds(checkTime);
+                var products = await _infinityPOSClient.GetProducts(checkTime);
+                if (_options.Value.Type == "2")
+                {
+                    await _shopifyService.PublishProducts(products);
+                    //await _shopifyService.PublishProducts(await _infinityPOSClient.AddStock(checkTime));
+                }
+                if (_options.Value.Type == "1")
+                {
+                    await _magentoService.PublishProducts(products);
+                    await _magentoService.PublishProducts(await _infinityPOSClient.AddStock(products, checkTime));
+                    await _magentoService.GetOrders(checkTime);
+                    await _magentoService.GetRefunds(checkTime);
+                }
             }
         }
 
-        public async Task SyncronizePlatformsAsync(DateTime time)
+        public async Task SyncronizePlatformsAsync(DateTime time) => await SyncronizeTriquestra(time);
+
+        public async Task SyncronizeTriquestra(DateTime time)
         {
             var checkTime = time.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-            var products = await _infinityPOSClient.GetProducts(checkTime);
-            await _magentoService.PublishProducts(await _infinityPOSClient.AddStock(products, checkTime));
+            var products = await _infinityPOSClient.SetProductAsFalse(checkTime);
+            var infinityProducts = await _magentoService.GetProductsInInfinity(products);
+            //await _magentoService.PublishProducts(infinityProducts);
+            //await _magentoService.PublishProducts(await _infinityPOSClient.AddStock(infinityProducts, checkTime));
         }
     }
 }

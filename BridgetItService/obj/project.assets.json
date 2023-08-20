@@ -3251,7 +3251,7 @@
     "version": "1.0.0",
     "restore": {
       "projectUniqueName": "C:\\Users\\user\\Documents\\GitHub\\BridgedItServices-1\\BridgetItService\\BridgetItService.csproj",
-      "projectName": "BridgetItService",
+      "projectName": "MiddlewareBIT",
       "projectPath": "C:\\Users\\user\\Documents\\GitHub\\BridgedItServices-1\\BridgetItService\\BridgetItService.csproj",
       "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
       "outputPath": "C:\\Users\\user\\Documents\\GitHub\\BridgedItServices-1\\BridgetItService\\obj\\",

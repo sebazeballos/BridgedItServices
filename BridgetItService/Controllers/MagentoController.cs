@@ -20,9 +20,9 @@ namespace BridgetItService.Controllers
         //    return Ok(await _shopifyService.PublishProducts(products.Products);
         //}
 
-        private IActionResult Ok(object v)
-        {
-            throw new NotImplementedException();
-        }
+        //private IActionResult Ok(object v)
+        //{
+        //    throw new NotImplementedException();
+        //}
     }
 }

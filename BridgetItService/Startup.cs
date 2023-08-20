@@ -26,6 +26,7 @@ namespace BridgetItService
         {
             // Add the IHttpClientFactory service
             services.AddHttpClient();
+            services.AddSettingsConfig(Configuration);
             services.AddSingleton<ApiHandler>();
             services.AddSingleton<IInfinityPOSClient, InfinityPOSClient>();
             services.AddSingleton<IShopifyServiceAPI, ShopifyServiceAPI>();
@@ -40,7 +41,7 @@ namespace BridgetItService
 
             services.AddMvc();
             services.AddControllers();
-            services.AddSettingsConfig(Configuration);
+            
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo

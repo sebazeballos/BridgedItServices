@@ -2,6 +2,6 @@
 {
     public class EcommerceSettings
     {
-        public string Type;
+        public string? Type { get; set; }
     }
 }

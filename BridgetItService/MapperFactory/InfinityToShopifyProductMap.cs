@@ -12,7 +12,6 @@ namespace BridgetItService.MapperFactory
             return new Product
             {
                 Title = infinityPOSProduct.Description,
-                Vendor = infinityPOSProduct.SupplierCode,
                 ProductType = infinityPOSProduct.ProductType,
                 CreatedAt = infinityPOSProduct.Created,
                 UpdatedAt = infinityPOSProduct.Updated,

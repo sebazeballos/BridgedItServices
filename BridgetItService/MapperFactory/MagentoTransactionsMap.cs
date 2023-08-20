@@ -29,7 +29,7 @@ namespace BridgetItService.MapperFactory
                     lines.Add(new Line
                     {
                         LineNumber = lineNumber++,
-                        ProductCode = transactionItem.Sku,
+                        ProductCode = CheckProductCode(transactionItem.Sku),
                         Quantity = transactionItem.QtyOrdered,
                         UnitSellingPrice = transactionItem.BasePrice,
                         StandardUnitSellingPrice = transactionItem.BasePrice,
@@ -65,6 +65,16 @@ namespace BridgetItService.MapperFactory
                 });
             }
             return payments;
+        }
+
+        private string CheckProductCode(string productCode)
+        {
+            if (productCode.Contains("/"))
+            {
+                var parts = productCode.Split('/');
+                return parts[0];
+            }
+            return productCode;
         }
     }
 }
