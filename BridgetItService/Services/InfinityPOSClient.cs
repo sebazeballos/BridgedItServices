@@ -351,11 +351,6 @@ namespace BridgetItService.Services
                             _client.DefaultRequestHeaders.Remove("x-request-id");
                         }
                         _client.DefaultRequestHeaders.Add("x-request-id", guid);
-                        if (product.Description.Contains(" - Test"))
-                        {
-                            var parts = product.Description.Split('-');
-                            product.Description = parts[0];
-                        }
                         var infinityProducts = SerializeBody(product);
                         var response = await _client.PutAsync($"{_options.Value.BaseEndpoint}/products?site_specific_override=always", infinityProducts);
 

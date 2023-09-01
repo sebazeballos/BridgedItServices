@@ -24,7 +24,6 @@ namespace BridgetItService
 
         public void ConfigureServices(IServiceCollection services)
         {
-            // Add the IHttpClientFactory service
             services.AddHttpClient();
             services.AddSettingsConfig(Configuration);
             services.AddSingleton<ApiHandler>();
