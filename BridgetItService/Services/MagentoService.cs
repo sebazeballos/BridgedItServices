@@ -71,7 +71,7 @@ namespace BridgetItService.Services
             infinityPosProducts.Products = new List<PutProductInInfinity?>();
             //MagentoProducts infinityMProducts = _infinityToMagentoProductMap.Map(infinityProducts);
             var bodyError = "";
-            while (page <= 506)
+            while (page <= 93)
             {
                 var parameters = $"?searchCriteria[currentPage]={page}&searchCriteria[pageSize]=20";
                 try

@@ -148,7 +148,7 @@ namespace BridgetItService.Services
                         //await _infinityPOSClient.PutProductInInfinity(product);
                     }
 
-                    await PutProductListInInfinity(products);
+                    //await PutProductListInInfinity(products);
 
                     foreach (var product in products.Products)
                     {
