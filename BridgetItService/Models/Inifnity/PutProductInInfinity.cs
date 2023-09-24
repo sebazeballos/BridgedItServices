@@ -9,5 +9,8 @@
         public decimal StandardSellingPrice { get; set; }
         public string ProductType { get; set; }
         public IList<CustomFields> CustomFields { get; set; }
+        public string SupplierCode { get; set; }
+        public decimal? LatestCostPrice { get; set; }
+        public int? HierarchyPosition { get; set; }
     }
 }

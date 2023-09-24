@@ -11,5 +11,8 @@
         public long SellableQuantity { get; set; }
         public IList<CustomFields> CustomFields { get; set; }
         public IList<AlternativeSellingPrices> AlternativeSellingPrices { get; set; }
+        public string SupplierCode { get; set; }
+        public decimal LatestCostPrice { get; set; }
+        public int HierarchyPosition { get; set; }
     }
 }
