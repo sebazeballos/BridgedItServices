@@ -50,10 +50,11 @@ namespace BridgetItService.Services
         public async Task SyncronizeTriquestra(DateTime time)
         {
             var checkTime = time.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-            var products = await _infinityPOSClient.SetProductAsFalse(checkTime);
-            var infinityProducts = await _magentoService.GetProductsInInfinity(products);
+            //var products = await _infinityPOSClient.SetProductAsFalse(checkTime);
+            //var infinityProducts = await _magentoService.GetProductsInInfinity(products);
             //await _magentoService.PublishProducts(infinityProducts);
-            //await _magentoService.PublishProducts(await _infinityPOSClient.AddStock(infinityProducts, checkTime));
+            var infinityProducts = await _infinityPOSClient.GetProducts(checkTime);
+            await _magentoService.PublishProducts(await _infinityPOSClient.AddStock(infinityProducts, checkTime));
         }
     }
 }

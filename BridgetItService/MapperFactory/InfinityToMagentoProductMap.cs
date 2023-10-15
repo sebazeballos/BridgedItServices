@@ -15,58 +15,62 @@ namespace BridgetItService.MapperFactory
             magentoProducts.Product = new List<MagentoProduct>();
             magentoProducts.DeletedProduct = new List<string>();
             foreach (InfinityPOSProduct product in infinityPosProducts.Products) {
-                product.Created = new DateTime(product.Created.Year, product.Created.Month, product.Created.Day, product.Created.Hour, product.Created.Minute, 0);
-                product.Updated = new DateTime(product.Updated.Year, product.Updated.Month, product.Updated.Day, product.Updated.Hour, product.Updated.Minute, 0);
-                if (product.CustomFields != null && product.CustomFields.FirstOrDefault(cf => cf.FieldName == "Web Enabled").FieldValue == "True")
+                if (product != null)
                 {
-                    if (product.Updated != product.Created)
+                    product.Created = new DateTime(product.Created.Year, product.Created.Month, product.Created.Day, 0, 0, 0);
+                    product.Updated = new DateTime(product.Updated.Year, product.Updated.Month, product.Updated.Day, 0, 0, 0);
+                    if (product.CustomFields != null && product.CustomFields.FirstOrDefault(cf => cf.FieldName == "Web Enabled").FieldValue == "True")
                     {
-                        magentoProducts.Product.Add(new MagentoProduct
+                        if (product.Updated != product.Created)
                         {
-                            Sku = product.ProductCode,
-                            Name = product.Description,
-                            TypeId = "simple",
-                            Visibility = 4,
-                            Price = product.StandardSellingPrice,
-                            AttributeSetId = 4,
-                            ExtensionAttributes = new ExtensionAttributes
+                            magentoProducts.Product.Add(new MagentoProduct
                             {
-                                StockItem = new StockItem
+                                Sku = product.ProductCode,
+                                TypeId = "simple",
+                                Visibility = 4,
+                                Status = 1,
+                                Price = product.StandardSellingPrice,
+                                AttributeSetId = 4,
+                                ExtensionAttributes = new ExtensionAttributes
                                 {
-                                    IsInStock = true,
-                                    Qty = CheckQty(product.SellableQuantity)
+                                    StockItem = new StockItem
+                                    {
+                                        IsInStock = true,
+                                        Qty = CheckQty(product.SellableQuantity)
+                                    }
                                 }
-                            }
-                        });
+                            });
+                        }
+                        else
+                        {
+                            magentoProducts.Product.Add(new MagentoProduct
+                            {
+                                Sku = product.ProductCode,
+                                Name = product.Description,
+                                TypeId = "simple",
+                                Visibility = 1,
+                                Status = 2,
+                                Price = product.StandardSellingPrice,
+                                AttributeSetId = 4,
+                                ExtensionAttributes = new ExtensionAttributes
+                                {
+                                    StockItem = new StockItem
+                                    {
+                                        IsInStock = true,
+                                        Qty = CheckQty(product.SellableQuantity)
+                                    }
+                                }
+                            });
+                        }
                     }
                     else
                     {
-                        magentoProducts.Product.Add(new MagentoProduct
+                        if (product.Updated != product.Created)
                         {
-                            Sku = product.ProductCode,
-                            Name = product.Description,
-                            TypeId = "simple",
-                            Visibility = 1,
-                            Price = product.StandardSellingPrice,
-                            AttributeSetId = 4,
-                            ExtensionAttributes = new ExtensionAttributes
-                            {
-                                StockItem = new StockItem
-                                {
-                                    IsInStock = true,
-                                    Qty = CheckQty(product.SellableQuantity)
-                                }
-                            }
-                        });
+                            magentoProducts.DeletedProduct.Add(product.ProductCode);
+                        }
                     }
                 }
-                else
-                {
-                    if (product.Updated != product.Created)
-                    {
-                        magentoProducts.DeletedProduct.Add(product.ProductCode);
-                    }
-                }                
             }
             return magentoProducts;
         }

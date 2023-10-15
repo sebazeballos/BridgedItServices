@@ -190,10 +190,9 @@ namespace BridgetItService.Services
                 {
 
                     var response = await _client.PostAsync($"{_options.Value.BaseUrl + _options.Value.CreateProduct}", body);
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        bodyError = await response.Content.ReadAsStringAsync();
-                    }
+                    
+                    bodyError = await response.Content.ReadAsStringAsync();
+                    
                     response.EnsureSuccessStatusCode();
                 }
                 catch (HttpRequestException ex)
@@ -291,7 +290,7 @@ namespace BridgetItService.Services
                 "&searchCriteria[filter_groups][0][filters][0][condition_type]=eq&searchCriteria[filter_groups][1][filters][0][field]=created_at&searchCriteria[filter_groups]" +
                 $"[1][filters][0][value]={startDate}&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq&searchCriteria[filter_groups][2][filters][0][field]=created_at" +
                 $"&searchCriteria[filter_groups][2][filters][0][value]={endDate}&searchCriteria[filter_groups][2][filters][0][condition_type]=lteq";
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuth());
+             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuth());
             var bodyError = "";
             try
             {

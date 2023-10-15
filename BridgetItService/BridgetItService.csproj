@@ -5,7 +5,7 @@
 	<AssemblyName>MiddlewareBIT</AssemblyName>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-	<OutputType>WinExe</OutputType>
+	<OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>

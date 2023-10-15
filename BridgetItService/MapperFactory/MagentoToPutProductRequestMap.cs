@@ -12,6 +12,7 @@ namespace BridgetItService.MapperFactory
                 Sku = magentoProduct.Sku,
                 Name = magentoProduct.Name,
                 Visibility = 4,
+                Status = 2,
                 Price = magentoProduct.Price,
                 AttributeSetId = 4,
                 ExtensionAttributes = Ext(magentoProduct)

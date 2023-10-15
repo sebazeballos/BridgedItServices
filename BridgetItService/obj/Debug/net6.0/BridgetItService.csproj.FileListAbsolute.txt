@@ -458,3 +458,5 @@ C:\Users\user\Documents\GitHub\BridgedItServices-1\BridgetItService\obj\Debug\ne
 C:\Users\user\Documents\GitHub\BridgedItServices-1\BridgetItService\obj\Debug\net6.0\refint\MiddlewareBIT.dll
 C:\Users\user\Documents\GitHub\BridgedItServices-1\BridgetItService\obj\Debug\net6.0\MiddlewareBIT.pdb
 C:\Users\user\Documents\GitHub\BridgedItServices-1\BridgetItService\obj\Debug\net6.0\ref\MiddlewareBIT.dll
+C:\Users\user\Documents\GitHub\BridgedItServices-1\BridgetItService\obj\Debug\net6.0\MiddlewareBIT.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\user\Documents\GitHub\BridgedItServices-1\BridgetItService\obj\Debug\net6.0\MiddlewareBIT.MvcApplicationPartsAssemblyInfo.cache

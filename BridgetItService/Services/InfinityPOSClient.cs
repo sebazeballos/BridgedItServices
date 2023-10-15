@@ -128,7 +128,7 @@ namespace BridgetItService.Services
                                 product.CustomFields.Add(new CustomFields
                                 {
                                     FieldName = "Web Enabled",
-                                    FieldValue = "False"
+                                    FieldValue = "True"
                                 });
                             }
                             else
@@ -142,7 +142,7 @@ namespace BridgetItService.Services
                             product.CustomFields.Add(new CustomFields
                             {
                                 FieldName = "Web Enabled",
-                                FieldValue = "False"
+                                FieldValue = "True"
                             });
                         }
                         //await _infinityPOSClient.PutProductInInfinity(product);
@@ -226,7 +226,7 @@ namespace BridgetItService.Services
                     _logger.LogError("Exception = " + ex.StatusCode.ToString()
                             + $" Using Endpoint Method Get {_options.Value.BaseEndpoint}/product_inventory?updated_since={startDate} Message = {bodyError}");
                 }
-                return null;
+                return products;
             }
         }
 
@@ -253,7 +253,7 @@ namespace BridgetItService.Services
             }
             else
             {
-                await CreateListOfProductsFromInventory(inventories);
+               products = await CreateListOfProductsFromInventory(inventories);
             }
 
 

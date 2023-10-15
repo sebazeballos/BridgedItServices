@@ -12,7 +12,7 @@ namespace BridgetItService.MapperFactory
             return new Invoice
             {
                 SalesPersonCode = "1",
-                SiteCode = "909",
+                SiteCode = "1",
                 Lines = MapLines(refund),
                 Payments = MapPayment(refund),
             };
@@ -30,9 +30,8 @@ namespace BridgetItService.MapperFactory
                         LineNumber = lineNumber++,
                         ProductCode = transactionItem.Sku,
                         Quantity = - transactionItem.QtyRefunded,
-                        UnitSellingPrice = - transactionItem.AmountRefunded,
-                        StandardUnitSellingPrice = - transactionItem.AmountRefunded,
-                        ExtendedSalesTax = item.TaxAmount
+                        UnitSellingPrice =  transactionItem.BasePriceInclTax,
+                        StandardUnitSellingPrice =  transactionItem.BasePriceInclTax
                     });
                     if (item.Payment.ShippingAmount > 0)
                     {
@@ -40,9 +39,9 @@ namespace BridgetItService.MapperFactory
                         {
                             LineNumber = lineNumber++,
                             ProductCode = DELIVERY_SKU,
-                            Quantity = 1,
-                            UnitSellingPrice = - item.Payment.ShippingRefunded,
-                            StandardUnitSellingPrice = - item.Payment.ShippingRefunded,
+                            Quantity = -1,
+                            UnitSellingPrice = item.Payment.ShippingRefunded,
+                            StandardUnitSellingPrice = item.Payment.ShippingRefunded,
                             ExtendedSalesTax = 0
                         });
                     }
@@ -59,9 +58,9 @@ namespace BridgetItService.MapperFactory
                 payments.Add(new Payment
                 {
                     PaymentLineNumber = paymentLineNumber++,
-                    TenderType = item.Payment.Method,
-                    TenderDescription = item.Payment.Method,
-                    PaymentValue = - item.Payment.AmountRefunded,
+                    TenderType = item.Payment.Method.ToUpper(),
+                    TenderDescription = item.Payment.Method.ToUpper(),
+                    PaymentValue =  -item.Payment.AmountRefunded,
                 });
             }
             return payments;

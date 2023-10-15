@@ -13,7 +13,7 @@ namespace BridgetItService.MapperFactory
             return new Invoice
             {
                 SalesPersonCode = "1",
-                SiteCode = "909",
+                SiteCode = "1",
                 Lines = MapLines(order),
                 Payments = MapPayment(order),
             };
@@ -31,8 +31,8 @@ namespace BridgetItService.MapperFactory
                         LineNumber = lineNumber++,
                         ProductCode = CheckProductCode(transactionItem.Sku),
                         Quantity = transactionItem.QtyOrdered,
-                        UnitSellingPrice = transactionItem.BasePrice,
-                        StandardUnitSellingPrice = transactionItem.BasePrice,
+                        UnitSellingPrice = transactionItem.BasePriceInclTax,
+                        StandardUnitSellingPrice = transactionItem.BasePriceInclTax,
                         ExtendedSalesTax = item.TaxAmount
                     });
                     if (item.Payment.ShippingAmount > 0) {
@@ -59,8 +59,8 @@ namespace BridgetItService.MapperFactory
                 payments.Add(new Payment
                 {
                     PaymentLineNumber = paymentLineNumber++,
-                    TenderType = item.Payment.Method,
-                    TenderDescription = item.Payment.Method,
+                    TenderType = item.Payment.Method.ToUpper(),
+                    TenderDescription = item.Payment.Method.ToUpper(),
                     PaymentValue = item.Payment.AmountOrdered
                 });
             }
