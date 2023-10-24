@@ -20,8 +20,8 @@ namespace BridgetItService.Services
         private readonly IMap<InfinityPosProducts, MagentoProducts> _infinityToMagentoProductMap;
         private readonly IMap<MagentoProduct, PutMagentoProduct> _magentoPostToPut;
         private readonly IInfinityPOSClient _infinityPOSClient;
-        private readonly IMap<MagentoOrder, Invoice> _magentoTransactionsMap;
-        private readonly IMap<MagentoRefund, Invoice> _magentoRefundMap;
+        private readonly IMap<MagentoOrder, Invoices> _magentoTransactionsMap;
+        private readonly IMap<MagentoRefund, Invoices> _magentoRefundMap;
         private readonly HttpClient _client;
         private readonly string MEDIA_TYPE = "application/json";
         private readonly ILogger<MagentoService> _logger;
@@ -36,8 +36,8 @@ namespace BridgetItService.Services
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(MEDIA_TYPE));
 
             _infinityToMagentoProductMap = serviceProvider.GetService<IMap<InfinityPosProducts, MagentoProducts>>();
-            _magentoTransactionsMap = serviceProvider.GetService<IMap<MagentoOrder, Invoice>>();
-            _magentoRefundMap = serviceProvider.GetService<IMap<MagentoRefund, Invoice>>();
+            _magentoTransactionsMap = serviceProvider.GetService<IMap<MagentoOrder, Invoices>>();
+            _magentoRefundMap = serviceProvider.GetService<IMap<MagentoRefund, Invoices>>();
             _magentoPostToPut = serviceProvider.GetService<IMap<MagentoProduct, PutMagentoProduct>>();
 
             _infinityPOSClient = infinityPOSClient;
@@ -60,18 +60,19 @@ namespace BridgetItService.Services
             }
         }
 
-        public async Task<PutProducts> GetProductsInInfinity(PutProducts infinityProducts)
+        public async Task<InfinityPosProducts> GetProductsInInfinity(InfinityPosProducts infinityProducts)
         {
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuth());
             var page = 1;
+
             MagentoProducts products = new MagentoProducts();
-            products.Product = new List<MagentoProduct>();
+              products.Product = new List<MagentoProduct>();
             MagentoProducts productsInMagento = new MagentoProducts();
-            PutProducts infinityPosProducts = new PutProducts();
-            infinityPosProducts.Products = new List<PutProductInInfinity?>();
+            InfinityPosProducts infinityPosProducts = new InfinityPosProducts();
+            infinityPosProducts.Products = new List<InfinityPOSProduct>();
             //MagentoProducts infinityMProducts = _infinityToMagentoProductMap.Map(infinityProducts);
             var bodyError = "";
-            while (page <= 93)
+            while (page <= 513)
             {
                 var parameters = $"?searchCriteria[currentPage]={page}&searchCriteria[pageSize]=20";
                 try
@@ -97,42 +98,9 @@ namespace BridgetItService.Services
                 }
             }
 
-            infinityPosProducts.Products = infinityProducts.Products
+            infinityPosProducts.Products = (IList<InfinityPOSProduct>)infinityProducts.Products
             .Where(p => products.Product.Any(iProducts => iProducts.Sku == p.ProductCode))
             .ToList();
-
-            if (infinityPosProducts.Products.Count > 0)
-            {
-                foreach (var product in infinityPosProducts.Products)
-                {
-                    if (product.CustomFields != null)
-                    {
-                        if (!product.CustomFields.Any(cf => cf.FieldName == "Web Enabled"))
-                        {
-                            product.CustomFields.Add(new CustomFields
-                            {
-                                FieldName = "Web Enabled",
-                                FieldValue = "True"
-                            });
-                        }
-                        else
-                        {
-                            product.CustomFields.FirstOrDefault(cf => cf.FieldName == "Web Enabled").FieldValue = "True";
-                        }
-                    }
-                    else
-                    {
-                        product.CustomFields = new List<CustomFields?>();
-                        product.CustomFields.Add(new CustomFields
-                        {
-                            FieldName = "Web Enabled",
-                            FieldValue = "True"
-                        });
-                    }
-                    //await _infinityPOSClient.PutProductInInfinity(product);
-                }
-                await _infinityPOSClient.PutProductListInInfinity(infinityPosProducts);
-            }
 
             return infinityPosProducts;
         }
@@ -177,23 +145,63 @@ namespace BridgetItService.Services
             .ToList();
             return products;
         }
+        private async Task SendProduct(MagentoProduct product)
+        {
+            var bodyError = "";
+            MagentoRequest request = new MagentoRequest();
+            request.Product = product;
+            var body = SerializeBody(request);
+            try
+            {
+                HttpResponseMessage response;
+                if (product.Visibility == null)
+                {
+                    await PutProduct(product);
+                }
+                else
+                {
+                    response = await _client.PostAsync($"{_options.Value.BaseUrl + _options.Value.CreateProduct}", body);
+                    bodyError = await response.Content.ReadAsStringAsync();
+                    response.EnsureSuccessStatusCode();
+                }
+
+
+
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError("Exception = " + ex.StatusCode.ToString() + " With Body = " + TransformToRawString(product)
+                        + $" Using Endpoint {_options.Value.BaseUrl + _options.Value.CreateProduct} Message = {bodyError}");
+                
+            }
+        }
 
         private async Task SendProducts(IList<MagentoProduct> products)
         {
+            var sent = 0;
             foreach (MagentoProduct product in products)
             {
+                if (product.Sku == "45677777777777")
+                    sent++;
                 var bodyError = "";
                 MagentoRequest request = new MagentoRequest();
                 request.Product = product;
                 var body = SerializeBody(request);
                 try
                 {
+                    HttpResponseMessage response;
+                    if (product.Status == 1)
+                    {
+                        await PutProduct(product);
+                    }
+                    else { 
+                        response = await _client.PostAsync($"{_options.Value.BaseUrl + _options.Value.CreateProduct}", body);
+                        bodyError = await response.Content.ReadAsStringAsync();
+                        response.EnsureSuccessStatusCode();
+                    }
 
-                    var response = await _client.PostAsync($"{_options.Value.BaseUrl + _options.Value.CreateProduct}", body);
+                    sent++;
                     
-                    bodyError = await response.Content.ReadAsStringAsync();
-                    
-                    response.EnsureSuccessStatusCode();
                 }
                 catch (HttpRequestException ex)
                 {
@@ -227,6 +235,11 @@ namespace BridgetItService.Services
             }
             catch (HttpRequestException ex2)
             {
+                if (ex2.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    product.Visibility = 1;
+                    await SendProduct(product);
+                }
                 _logger.LogError("Exception = " + ex2.StatusCode.ToString() + " With Body = " + TransformToRawString(putMagentoProduct.Product)
                     + $" Using Endpoint {_options.Value.BaseUrl + _options.Value.CreateProduct + "/" + putMagentoProduct.Product.Sku} Message = {bodyError}");
             }
@@ -255,16 +268,29 @@ namespace BridgetItService.Services
         }
         public async Task GetOrders(string startDate)
         {
-            var endDate = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+            var endDate = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+            var starttDate = DateTime.Now.Subtract(TimeSpan.FromMinutes(15)).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             var parameters = "?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=complete" +
-                "&searchCriteria[filter_groups][0][filters][0][condition_type]=eq&searchCriteria[filter_groups][1][filters][0][field]=created_at&searchCriteria[filter_groups]" +
-                $"[1][filters][0][value]={startDate}&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq&searchCriteria[filter_groups][2][filters][0][field]=created_at" +
+                $"&searchCriteria[filter_groups][1][filters][0][field]=updated_at&searchCriteria[filter_groups][1][filters][0][value]={starttDate}" +
+                "&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq&searchCriteria[filter_groups][2][filters][0][field]=updated_at" +
                 $"&searchCriteria[filter_groups][2][filters][0][value]={endDate}&searchCriteria[filter_groups][2][filters][0][condition_type]=lteq";
+
+
+
+
+            //"?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=complete" +
+            //"&searchCriteria[filter_groups][0][filters][0][condition_type]=eq&searchCriteria[filter_groups][1][filters][0][field]=updated_at&searchCriteria[filter_groups]" +
+            //$"[1][filters][0][value]={startDate}&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq&searchCriteria[filter_groups][2][filters][0][field]=updated_at" +
+            //$"&searchCriteria[filter_groups][2][filters][0][value]={endDate}&searchCriteria[filter_groups][2][filters][0][condition_type]=lteq";
+
+
+
+
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuth());
             var bodyError = "";
             try
             {
-                var response = await _client.GetAsync($"{_options.Value.BaseUrl + _options.Value.Orders + parameters}");
+                var response = await _client.GetAsync($"{_options.Value.BaseUrl + "/rest/V1/orders" + parameters}");
                 if (!response.IsSuccessStatusCode)
                 {
                     bodyError = await response.Content.ReadAsStringAsync();
@@ -272,10 +298,13 @@ namespace BridgetItService.Services
                 response.EnsureSuccessStatusCode();
                 var content = await response.Content.ReadAsStringAsync();
                 var magentoOrder = Deserialize<MagentoOrder>(content);
-                Invoice invoice = _magentoTransactionsMap.Map(magentoOrder);
-                if (invoice.Lines.Count > 0)
+                Invoices invoices = _magentoTransactionsMap.Map(magentoOrder);
+                if (invoices.Invoice.Count > 0)
                 {
-                    await _infinityPOSClient.PostTransaction(invoice);
+                    foreach (Invoice invoice in invoices.Invoice)
+                    {
+                        await _infinityPOSClient.PostTransaction(invoice);
+                    }
                 }
             }
             catch (HttpRequestException ex) {
@@ -285,10 +314,11 @@ namespace BridgetItService.Services
         }
         public async Task GetRefunds(string startDate)
         {
-            var endDate = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+            var endDate = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+            var starttDate = DateTime.Now.Subtract(TimeSpan.FromMinutes(15)).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             var parameters = "?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=closed" +
-                "&searchCriteria[filter_groups][0][filters][0][condition_type]=eq&searchCriteria[filter_groups][1][filters][0][field]=created_at&searchCriteria[filter_groups]" +
-                $"[1][filters][0][value]={startDate}&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq&searchCriteria[filter_groups][2][filters][0][field]=created_at" +
+                "&searchCriteria[filter_groups][0][filters][0][condition_type]=eq&searchCriteria[filter_groups][1][filters][0][field]=updated_at&searchCriteria[filter_groups]" +
+                $"[1][filters][0][value]={starttDate}&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq&searchCriteria[filter_groups][2][filters][0][field]=created_at" +
                 $"&searchCriteria[filter_groups][2][filters][0][value]={endDate}&searchCriteria[filter_groups][2][filters][0][condition_type]=lteq";
              _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuth());
             var bodyError = "";
@@ -302,11 +332,14 @@ namespace BridgetItService.Services
                 response.EnsureSuccessStatusCode();
                 var content = await response.Content.ReadAsStringAsync();
                 var magentoRefund = Deserialize<MagentoRefund>(content);
-                Invoice invoice = _magentoRefundMap.Map(magentoRefund);
-                if (invoice.Lines.Count > 0)
+                Invoices invoices = _magentoRefundMap.Map(magentoRefund);
+                if (invoices.Invoice.Count > 0)
                 {
-                    await _infinityPOSClient.PostTransaction(invoice);
-                }  
+                    foreach (Invoice invoice in invoices.Invoice)
+                    {
+                        await _infinityPOSClient.PostTransaction(invoice);
+                    }
+                }
             }
             catch (HttpRequestException ex) {
                 _logger.LogError("Exception = " + ex.StatusCode.ToString()

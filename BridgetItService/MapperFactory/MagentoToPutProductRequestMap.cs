@@ -10,8 +10,6 @@ namespace BridgetItService.MapperFactory
             => new PutMagentoProduct
             {
                 Sku = magentoProduct.Sku,
-                Name = magentoProduct.Name,
-                Visibility = 4,
                 Status = 2,
                 Price = magentoProduct.Price,
                 AttributeSetId = 4,
@@ -20,14 +18,14 @@ namespace BridgetItService.MapperFactory
 
         public ExtensionAttributes? Ext(MagentoProduct product)
         {
-            if(product.ExtensionAttributes.StockItem.Qty != "0")
+            if(product.ExtensionAttributes.StockItem.Qty != 0)
             {
                 return new ExtensionAttributes
                 {
                     StockItem = new StockItem
                     {
                         IsInStock = true,
-                        Qty = product.ExtensionAttributes.StockItem.Qty
+                        Qty = (long)product.ExtensionAttributes.StockItem.Qty
                     }
                 };
             }

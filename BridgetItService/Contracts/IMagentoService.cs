@@ -8,6 +8,6 @@ namespace BridgetItService.Contracts
         public Task PublishProducts(InfinityPosProducts products);
         public Task GetOrders(string startDate);
         public Task GetRefunds(string startDate);
-        public Task<PutProducts> GetProductsInInfinity(PutProducts products);
+        public Task<InfinityPosProducts> GetProductsInInfinity(InfinityPosProducts products);
     }
 }

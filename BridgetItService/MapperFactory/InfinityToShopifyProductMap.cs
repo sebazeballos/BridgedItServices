@@ -17,7 +17,7 @@ namespace BridgetItService.MapperFactory
                 UpdatedAt = infinityPOSProduct.Updated,
                 Variants = new List<ProductVariant> { new ProductVariant { Price = infinityPOSProduct.StandardSellingPrice,
                                                                            CompareAtPrice = GetPromotionalPrice(infinityPOSProduct),
-                                                                           InventoryQuantity = infinityPOSProduct.SellableQuantity
+                                                                           InventoryQuantity = (long)infinityPOSProduct.SellableQuantity
                                                                            } },
                 
                 

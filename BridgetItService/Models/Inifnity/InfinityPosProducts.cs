@@ -4,6 +4,6 @@ namespace BridgetItService.Models.Inifnity
 {
     public class InfinityPosProducts
     {
-        public IList<InfinityPOSProduct?> Products { get; set; }
+        public IList<InfinityPOSProduct> Products { get; set; }
     }
 }

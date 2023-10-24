@@ -26,7 +26,7 @@ namespace BridgetItService.Services
 
         private async Task UpdateAsync()
         {
-            DateTime currentTime = DateTime.Now.AddHours(-68).AddMinutes(-_options.Value.Minutes);
+            DateTime currentTime = DateTime.Now.AddHours(-13).AddMinutes(-_options.Value.Minutes);
             await _apiHandler.UpdateShopifyAsync(currentTime);
         }
 

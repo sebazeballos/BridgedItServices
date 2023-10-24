@@ -98,6 +98,37 @@ namespace BridgetItService.Services
                 return null;
             }
         }
+        public async Task<PutProducts> GetPutProducts(string startDate)
+        {
+            var bodyError = "";
+            try
+            {
+                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuthentication());
+                var response = await _client.GetAsync($"{_options.Value.BaseEndpoint}/products?updated_since={startDate}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    bodyError = await response.Content.ReadAsStringAsync();
+                }
+
+                response.EnsureSuccessStatusCode();
+
+                var content = await response.Content.ReadAsStringAsync();
+                var products = Deserialize<PutProducts>(content);
+
+
+                return products;
+            }
+            catch (HttpRequestException ex)
+            {
+                if (ex.StatusCode != HttpStatusCode.NotFound)
+                {
+                    _logger.LogError("Exception = " + ex.StatusCode.ToString()
+                            + $" Using Endpoint Method Get {_options.Value.BaseEndpoint}/products?updated_since={startDate} Message = {bodyError}");
+                }
+                return null;
+            }
+        }
 
         public async Task<PutProducts> SetProductAsFalse(string startDate)
         {
@@ -194,7 +225,82 @@ namespace BridgetItService.Services
             }
         }
 
+        private async Task<InfinityPosProducts> GetInventories(InfinityPosProducts products)
+        {
+            HashSet<string> productCodes = new HashSet<string>(products.Products.Select(p => p.ProductCode));
+            var responseBody = "";
+            try
+            {
+                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuthentication());
+                string guid = Guid.NewGuid().ToString();
+                if (_client.DefaultRequestHeaders.Contains("x-request-id"))
+                {
+                    _client.DefaultRequestHeaders.Remove("x-request-id");
+                }
+                _client.DefaultRequestHeaders.Add("x-request-id", guid);
+                var infinityProducts = SerializeBody(productCodes);
+                var response = await _client.PostAsync($"{_options.Value.BaseEndpoint}/product_inventory/search", infinityProducts);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    responseBody = await response.Content.ReadAsStringAsync();
+                }
+
+                response.EnsureSuccessStatusCode();
+
+                var content = await response.Content.ReadAsStringAsync();
+                var inventories = new InventoryResponse();
+                inventories.Inventory = Deserialize<IList<Inventory>>(content);
+                var onlyLastUpdated = GetLastUpdatedInventory(inventories);
+                return SetProductsSync(onlyLastUpdated, products);
+
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError("Exception = " + ex.StatusCode.ToString()
+                            + $" Using Endpoint Method Put {_options.Value.BaseEndpoint}/products Message = {responseBody}");
+                return null;
+            }
+        }
+
         public async Task<InfinityPosProducts> AddStock(InfinityPosProducts products, string startDate)
+        {
+            var bodyError = "";
+            try
+            {
+                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuthentication());
+                var response = await _client.GetAsync($"{_options.Value.BaseEndpoint}/product_inventory?updated_since={startDate}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    bodyError = await response.Content.ReadAsStringAsync();
+                }
+
+                response.EnsureSuccessStatusCode();
+
+                var content = await response.Content.ReadAsStringAsync();
+                var inventories = Deserialize<InventoryResponse>(content);
+                
+                var onlyLastUpdated = GetLastUpdatedInventory(inventories);
+                if(onlyLastUpdated == null && products.Products != null)
+                {
+                    return await GetInventories(products);
+                }
+                return await SetProducts(onlyLastUpdated, products);
+            }
+            catch (HttpRequestException ex)
+            {
+                if (ex.StatusCode != HttpStatusCode.NotFound)
+                {
+                    return await GetInventories(products);
+                    _logger.LogError("Exception = " + ex.StatusCode.ToString()
+                            + $" Using Endpoint Method Get {_options.Value.BaseEndpoint}/product_inventory?updated_since={startDate} Message = {bodyError}");
+                }
+                return products;
+            }
+        }
+
+        public async Task<InfinityPosProducts> AddStockSync(InfinityPosProducts products, string startDate)
         {
             var bodyError = "";
             try
@@ -215,7 +321,7 @@ namespace BridgetItService.Services
                 {
                     var onlyLastUpdated = GetLastUpdatedInventory(inventories);
 
-                    return await SetProducts(onlyLastUpdated, products);
+                    return SetProductsSync(onlyLastUpdated, products);
                 }
                 return products;
             }
@@ -230,18 +336,43 @@ namespace BridgetItService.Services
             }
         }
 
-        private List<Inventory> GetLastUpdatedInventory(InventoryResponse inventories) => inventories.Inventory.Where(inv => inv.SiteCode == 1)
+        private InfinityPosProducts SetProductsSync(List<Inventory> inventories, InfinityPosProducts products)
+        {
+            foreach (var product in products.Products)
+            {
+                var matchingInventory = inventories.FirstOrDefault(i => i.ProductCode == product.ProductCode);
+                if (matchingInventory != null)
+                {
+                    product.SellableQuantity = matchingInventory.SellableQuantity;
+                }
+            }
+            return products;
+        }
+
+            private List<Inventory> GetLastUpdatedInventory(InventoryResponse inventories) => inventories.Inventory.Where(inv => inv.SiteCode == 1)
                                                                                             .GroupBy(p => p.ProductCode)
                                                                                             .Select(pr => pr.OrderByDescending(obj => obj.Updated).First())
                                                                                             .ToList();
 
-        private async Task<InfinityPosProducts> SetProducts(List<Inventory> inventories, InfinityPosProducts? products = null)
+        private async Task<InfinityPosProducts> SetProducts(List<Inventory> inventories, InfinityPosProducts products)
         {
             if (products != null)
             {
+                
+                foreach (var product in products.Products)
+                {
+                    var matchingInventory = inventories.FirstOrDefault(i => i.ProductCode == product.ProductCode);
+                    if (matchingInventory != null)
+                    {
+                        product.SellableQuantity = matchingInventory.SellableQuantity;
+                    }
+                }
                 HashSet<string> productCodes = new HashSet<string>(products.Products.Select(p => p.ProductCode));
+                HashSet<string> inventoryCodes = new HashSet<string>(inventories.Select(p => p.ProductCode));
 
                 List<Inventory> nonRepeatedInventories = inventories.Where(i => !productCodes.Contains(i.ProductCode)).ToList();
+                InfinityPosProducts productsNotFind = new InfinityPosProducts();
+                productsNotFind.Products = products.Products.Where(i => !inventoryCodes.Contains(i.ProductCode)).ToList();
 
                 if (nonRepeatedInventories.Count > 0)
                 {
@@ -250,21 +381,25 @@ namespace BridgetItService.Services
                         products.Products.Add(await GetProduct(inv.ProductCode));
                     }
                 }
+                if (productsNotFind.Products.Count > 0)
+                {
+                    InfinityPosProducts productsFind = new InfinityPosProducts();
+                    productsFind = await GetInventories(productsNotFind);
+                    if (productsFind.Products.Count > 0)
+                    {
+                        foreach (InfinityPOSProduct inv in productsFind.Products)
+                        {
+                            products.Products.FirstOrDefault(i => i.ProductCode == inv.ProductCode).SellableQuantity = inv.SellableQuantity;
+                        }
+                    }
+                }
             }
             else
             {
-               products = await CreateListOfProductsFromInventory(inventories);
+                products = await CreateListOfProductsFromInventory(inventories);
             }
+                
 
-
-            foreach (var inventory in inventories)
-            {
-                var matchingProduct = products.Products.FirstOrDefault(p => p?.ProductCode == inventory.ProductCode);
-                if (matchingProduct != null)
-                {
-                    matchingProduct.SellableQuantity = Convert.ToInt64(inventory.SellableQuantity);
-                }
-            }
             return products;
         }
 

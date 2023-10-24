@@ -37,7 +37,6 @@ namespace BridgetItService.Services
                 }
                 if (_options.Value.Type == "1")
                 {
-                    await _magentoService.PublishProducts(products);
                     await _magentoService.PublishProducts(await _infinityPOSClient.AddStock(products, checkTime));
                     await _magentoService.GetOrders(checkTime);
                     await _magentoService.GetRefunds(checkTime);
@@ -51,10 +50,11 @@ namespace BridgetItService.Services
         {
             var checkTime = time.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             //var products = await _infinityPOSClient.SetProductAsFalse(checkTime);
-            //var infinityProducts = await _magentoService.GetProductsInInfinity(products);
-            //await _magentoService.PublishProducts(infinityProducts);
             var infinityProducts = await _infinityPOSClient.GetProducts(checkTime);
-            await _magentoService.PublishProducts(await _infinityPOSClient.AddStock(infinityProducts, checkTime));
+            //var infinityProducts = await _magentoService.GetProductsInInfinity(puProducts);
+            //var products = await _infinityPOSClient.GetProducts(checkTime);
+            //await _magentoService.PublishProducts(infinityProducts);
+            await _magentoService.PublishProducts(await _infinityPOSClient.AddStockSync(infinityProducts, checkTime));
         }
     }
 }
