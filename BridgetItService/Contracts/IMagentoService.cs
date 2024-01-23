@@ -9,5 +9,6 @@ namespace BridgetItService.Contracts
         public Task GetOrders(string startDate);
         public Task GetRefunds(string startDate);
         public Task<InfinityPosProducts> GetProductsInInfinity(InfinityPosProducts products);
+        public Task GetOrder();
     }
 }

@@ -28,10 +28,7 @@ namespace BridgetItService.Controllers
         [HttpPost("Syncronize/{startDate}")]
         public async Task<IActionResult> SyncronizeAsync(string startDate)
         {
-            if (DateTime.TryParse(startDate, out DateTime parsedStartDate))
-            {
-                await _apiHandler.SyncronizePlatformsAsync(parsedStartDate);
-            }
+                await _apiHandler.SyncronizePlatformsAsync(startDate);
             return Ok($"the date is {startDate}");
         }
 

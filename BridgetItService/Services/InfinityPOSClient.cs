@@ -12,6 +12,8 @@ using System.Net.Http;
 using System.Net;
 using Microsoft.Office.Interop.Excel;
 using System;
+using System.Reflection.Metadata;
+using System.Fabric.Query;
 
 namespace BridgetItService.Services
 {
@@ -84,6 +86,15 @@ namespace BridgetItService.Services
 
                 var content = await response.Content.ReadAsStringAsync();
                 var products = Deserialize<InfinityPosProducts>(content);
+                //foreach(var product in products.Products)
+                //{
+                //    if (product != null && product.ProductCode == "7777777550276")
+                //    {
+                //        products.Products.Clear();
+                //        products.Products.Add(product);
+                //        return products;
+                //    }
+                //}
 
 
                 return products;
@@ -229,6 +240,53 @@ namespace BridgetItService.Services
         {
             HashSet<string> productCodes = new HashSet<string>(products.Products.Select(p => p.ProductCode));
             var responseBody = "";
+            HashSet<string> batch = new HashSet<string>();
+            var inventories = new InventoryResponse();
+            inventories.Inventory = new List<Inventory>();
+            if (productCodes.Count > 2000)
+            {
+                foreach (var code in productCodes)
+                {
+                    batch.Add(code);
+
+                    if (batch.Count == 2000)
+                    {
+                        IList<Inventory> inv = new List<Inventory>();
+                        inv = await GetInventoriesInfinity(batch);
+                        if (inv != null)
+                        {
+                            foreach (var item in inv)
+                            {
+                                inventories.Inventory.Add(item);
+                            }
+                            batch.Clear();
+                        }
+                    }
+                }
+                if (batch.Count > 0)
+                {
+                    IList<Inventory> inv = new List<Inventory>();
+                    inv = await GetInventoriesInfinity(batch);
+                    foreach (var item in inv)
+                    {
+                        inventories.Inventory.Add(item);
+                    }
+                    batch.Clear();
+                }
+            }
+            else
+            {
+                inventories.Inventory = await GetInventoriesInfinity(productCodes);
+            }
+            var onlyLastUpdated = GetLastUpdatedInventory(inventories);
+            return SetProductsSync(onlyLastUpdated, products);
+            
+            
+        }
+
+        private async Task<IList<Inventory>> GetInventoriesInfinity(HashSet<string> productCodes)
+        {
+            var responseBody="";
             try
             {
                 _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuthentication());
@@ -250,9 +308,7 @@ namespace BridgetItService.Services
 
                 var content = await response.Content.ReadAsStringAsync();
                 var inventories = new InventoryResponse();
-                inventories.Inventory = Deserialize<IList<Inventory>>(content);
-                var onlyLastUpdated = GetLastUpdatedInventory(inventories);
-                return SetProductsSync(onlyLastUpdated, products);
+                return Deserialize<IList<Inventory>>(content);
 
             }
             catch (HttpRequestException ex)
@@ -378,7 +434,12 @@ namespace BridgetItService.Services
                 {
                     foreach (Inventory inv in nonRepeatedInventories)
                     {
-                        products.Products.Add(await GetProduct(inv.ProductCode));
+                        InfinityPOSProduct prod = new InfinityPOSProduct();
+                        prod = await GetProduct(inv.ProductCode);
+                        if (prod != null) {
+                            prod.SellableQuantity = inv.SellableQuantity;
+                            products.Products.Add(prod);
+                        }
                     }
                 }
                 if (productsNotFind.Products.Count > 0)
@@ -409,7 +470,13 @@ namespace BridgetItService.Services
             products.Products = new List<InfinityPOSProduct?>();
             foreach (Inventory inv in inventories)
             {
-                products.Products.Add(await GetProduct(inv.ProductCode));
+                InfinityPOSProduct prod = new InfinityPOSProduct();
+                prod = await GetProduct(inv.ProductCode);
+                if (prod != null)
+                {
+                    prod.SellableQuantity = inv.SellableQuantity;
+                    products.Products.Add(prod);
+                }
             }
             return products;
         }
@@ -525,6 +592,47 @@ namespace BridgetItService.Services
                 _client.DefaultRequestHeaders.Add("user-agent", "Infinity API Synchronisation Service");
                 var infinityInvoices = SerializeBody(invoice);
                 var response = await _client.PostAsync(_options.Value.BaseEndpoint + _options.Value.PostInvoicesEndpoint, infinityInvoices);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    bodyError = await response.Content.ReadAsStringAsync();
+                }
+
+                response.EnsureSuccessStatusCode();
+
+                var content = await response.Content.ReadAsStringAsync();
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError("Exception = " + ex.StatusCode.ToString()
+                        + $" Using Endpoint Method Get {_options.Value.BaseEndpoint + _options.Value.PostInvoicesEndpoint}" +
+                        $" Body = {TransformToRawString(invoice)}  Message = {bodyError}");
+            }
+        }
+
+        public async Task PostTransactionS()
+        {
+            var bodyError = "";
+            GetTransactionRequestcs invoice = new GetTransactionRequestcs();
+            invoice.Created = new Created { DateFrom = "2024-01-10",
+                                            DateTo = "2024-01-16"
+            };
+            invoice.Offset = 0;
+            invoice.MaxRecords = "500";
+            invoice.SiteCode = 1;
+            try
+            {
+                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuthentication());
+                if (_client.DefaultRequestHeaders.Contains("x-request-id"))
+                {
+                    _client.DefaultRequestHeaders.Remove("x-request-id");
+                }
+                _client.DefaultRequestHeaders.Add("x-request-id", Guid.NewGuid().ToString());
+                _client.DefaultRequestHeaders.Add("x-logging-id", Guid.NewGuid().ToString());
+                _client.DefaultRequestHeaders.Add("user-agent", "Infinity API Synchronisation Service");
+                
+                var infinityInvoices = SerializeBody(invoice);
+                var response = await _client.PostAsync(_options.Value.BaseEndpoint + _options.Value.PostInvoicesEndpoint + "/search", infinityInvoices);
 
                 if (!response.IsSuccessStatusCode)
                 {

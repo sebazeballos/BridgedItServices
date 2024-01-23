@@ -30,9 +30,9 @@ namespace BridgetItService.MapperFactory
                                     Sku = product.ProductCode,
                                     Name = product.Description,
                                     TypeId = "simple",
+                                    AttributeSetId = 4,
                                     Status = 1,
                                     Price = product.StandardSellingPrice,
-                                    AttributeSetId = 4,
                                     ExtensionAttributes = new ExtensionAttributes
                                     {
                                         StockItem = new StockItem
@@ -50,11 +50,11 @@ namespace BridgetItService.MapperFactory
                                     {
                                         Sku = product.ProductCode,
                                         Name = product.Description,
-                                        TypeId = "simple",
                                         Visibility = 1,
-                                        Status = 2,
-                                        Price = product.StandardSellingPrice,
+                                        TypeId = "simple",
                                         AttributeSetId = 4,
+                                        Status = 1,
+                                        Price = product.StandardSellingPrice,
                                         ExtensionAttributes = new ExtensionAttributes
                                         {
                                             StockItem = new StockItem
@@ -68,17 +68,17 @@ namespace BridgetItService.MapperFactory
                         }
                         else
                         {
-                            if (product.Updated != product.Created && product.CustomFields.Any(cf => cf.FieldName == "Web Enabled"))
+                            if (product.CustomFields.Any(cf => cf.FieldName == "Web Enabled"))
                             {
                                 magentoProducts.Product.Add(new MagentoProduct
                                 {
                                     Sku = product.ProductCode,
                                     Name = product.Description,
                                     TypeId = "simple",
+                                    AttributeSetId = 4,
                                     Visibility = 1,
                                     Status = 2,
                                     Price = product.StandardSellingPrice,
-                                    AttributeSetId = 4,
                                     ExtensionAttributes = new ExtensionAttributes
                                     {
                                         StockItem = new StockItem

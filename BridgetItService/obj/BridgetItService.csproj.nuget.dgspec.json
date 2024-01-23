@@ -58,6 +58,10 @@
               "target": "Package",
               "version": "[7.0.7, )"
             },
+            "Microsoft.Extensions.Hosting.WindowsServices": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
             "Microsoft.ServiceFabric.Services": {
               "target": "Package",
               "version": "[6.1.1583, )"

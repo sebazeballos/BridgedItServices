@@ -41,7 +41,11 @@ namespace BridgetItService.MapperFactory
                         {
                         transactionItem.Sku = FABRIC_SKU_;
                         }
-                        var discount = 0.0;
+                        if (transactionItem.Name.Contains("International Air Freight"))
+                        {
+                            transactionItem.Sku = DELIVERY_SKU;
+                        }
+                    var discount = 0.0;
                         if (transactionItem.BaseDiscountAmount != 0 && transactionItem.QtyOrdered != 0)
                         {
                             discount = transactionItem.BaseDiscountAmount / transactionItem.QtyOrdered;
@@ -56,19 +60,19 @@ namespace BridgetItService.MapperFactory
                             StandardUnitSellingPrice = transactionItem.BasePriceInclTax,
                             ExtendedSalesTax = item.TaxAmount
                         });
-                        if (item.Payment.ShippingAmount > 0)
-                        {
-                            lines.Add(new Line
-                            {
-                                LineNumber = lineNumber++,
-                                ProductCode = DELIVERY_SKU,
-                                Quantity = 1,
-                                UnitSellingPrice = item.Payment.ShippingAmount,
-                                StandardUnitSellingPrice = item.Payment.ShippingAmount,
-                                ExtendedSalesTax = 0
-                            });
-                        }
                     }
+                }
+                if (item.Payment.ShippingAmount > 0)
+                {
+                    lines.Add(new Line
+                    {
+                        LineNumber = lineNumber++,
+                        ProductCode = DELIVERY_SKU,
+                        Quantity = 1,
+                        UnitSellingPrice = item.Payment.ShippingAmount,
+                        StandardUnitSellingPrice = item.Payment.ShippingAmount,
+                        ExtendedSalesTax = 0
+                    });
                 }
 
             return lines;

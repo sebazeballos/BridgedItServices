@@ -163,6 +163,8 @@ namespace BridgetItService.Services
                     response = await _client.PostAsync($"{_options.Value.BaseUrl + _options.Value.CreateProduct}", body);
                     bodyError = await response.Content.ReadAsStringAsync();
                     response.EnsureSuccessStatusCode();
+                    _logger.LogInformation("Product Published" + " With Body = " + TransformToRawString(product)
+                        + $" Using Endpoint {_options.Value.BaseUrl + _options.Value.CreateProduct} Message = {bodyError}");
                 }
 
 
@@ -181,40 +183,37 @@ namespace BridgetItService.Services
             var sent = 0;
             foreach (MagentoProduct product in products)
             {
-                if (product.Sku == "45677777777777")
-                    sent++;
-                var bodyError = "";
-                MagentoRequest request = new MagentoRequest();
-                request.Product = product;
-                var body = SerializeBody(request);
-                try
-                {
-                    HttpResponseMessage response;
-                    if (product.Status == 1)
+                    _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuth());
+                    var bodyError = "";
+                    MagentoRequest request = new MagentoRequest();
+                    request.Product = product;
+                    var body = SerializeBody(request);
+                    try
                     {
+                        HttpResponseMessage response;
                         await PutProduct(product);
-                    }
-                    else { 
-                        response = await _client.PostAsync($"{_options.Value.BaseUrl + _options.Value.CreateProduct}", body);
-                        bodyError = await response.Content.ReadAsStringAsync();
-                        response.EnsureSuccessStatusCode();
-                    }
 
-                    sent++;
-                    
-                }
-                catch (HttpRequestException ex)
-                {
-                    if (ex.StatusCode == HttpStatusCode.BadRequest)
-                    {
-                        await PutProduct(product);
+                        sent++;
+
                     }
-                    else
+                    catch (HttpRequestException ex)
                     {
-                        _logger.LogError("Exception = " + ex.StatusCode.ToString() + " With Body = " + TransformToRawString(product)
-                            + $" Using Endpoint {_options.Value.BaseUrl + _options.Value.CreateProduct } Message = {bodyError}");
+                        if (ex.StatusCode == HttpStatusCode.BadRequest)
+                        {
+                            if (product.Status == 2)
+                            {
+                            }
+                            else
+                            {
+                                await PutProduct(product);
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogError("Exception = " + ex.StatusCode.ToString() + " With Body = " + TransformToRawString(product)
+                                + $" Using Endpoint {_options.Value.BaseUrl + _options.Value.CreateProduct} Message = {bodyError}");
+                        }
                     }
-                }
             }
         }
 
@@ -231,18 +230,47 @@ namespace BridgetItService.Services
                 {
                     bodyError = await response.Content.ReadAsStringAsync();
                 }
+                bodyError = await response.Content.ReadAsStringAsync();
                 response.EnsureSuccessStatusCode();
+                _logger.LogInformation("Product Updated" + " With Body = " + TransformToRawString(putMagentoProduct.Product)
+                   + $" Using Endpoint {_options.Value.BaseUrl + _options.Value.CreateProduct + "/" + putMagentoProduct.Product.Sku} Message = {bodyError}");
             }
             catch (HttpRequestException ex2)
             {
                 if (ex2.StatusCode == HttpStatusCode.BadRequest)
                 {
-                    product.Visibility = 1;
-                    await SendProduct(product);
+                    if (product.Status != 2  )
+                    {
+                        product.Visibility = 1;
+                        await SendProduct(product);
+                    }
+
                 }
-                _logger.LogError("Exception = " + ex2.StatusCode.ToString() + " With Body = " + TransformToRawString(putMagentoProduct.Product)
+                else {
+                    _logger.LogError("Exception = " + ex2.StatusCode.ToString() + " With Body = " + TransformToRawString(putMagentoProduct.Product)
                     + $" Using Endpoint {_options.Value.BaseUrl + _options.Value.CreateProduct + "/" + putMagentoProduct.Product.Sku} Message = {bodyError}");
+                }
+                
             }
+        }
+
+        private async Task DeleteProduct(string sku)
+        {
+            var bodyError = "";
+                try
+                {
+                    var response = await _client.DeleteAsync($"{_options.Value.BaseUrl + _options.Value.CreateProduct}/{sku}");
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        bodyError = await response.Content.ReadAsStringAsync();
+                    }
+                    response.EnsureSuccessStatusCode();
+                }
+                catch (HttpRequestException e)
+                {
+                    _logger.LogError("Exception = " + e.StatusCode.ToString() +
+                        $" Trying to Delete using endpoint = {_options.Value.BaseUrl + _options.Value.CreateProduct}/{sku} Message = {bodyError}");
+                }
         }
 
         private async Task DeleteProducts(IList<string> skuList)
@@ -266,31 +294,14 @@ namespace BridgetItService.Services
                 }
             }
         }
-        public async Task GetOrders(string startDate)
+
+        public async Task GetOrder()
         {
-            var endDate = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-            var starttDate = DateTime.Now.Subtract(TimeSpan.FromMinutes(15)).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-            var parameters = "?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=complete" +
-                $"&searchCriteria[filter_groups][1][filters][0][field]=updated_at&searchCriteria[filter_groups][1][filters][0][value]={starttDate}" +
-                "&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq&searchCriteria[filter_groups][2][filters][0][field]=updated_at" +
-                $"&searchCriteria[filter_groups][2][filters][0][value]={endDate}&searchCriteria[filter_groups][2][filters][0][condition_type]=lteq";
-
-
-
-
-            //"?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=complete" +
-            //"&searchCriteria[filter_groups][0][filters][0][condition_type]=eq&searchCriteria[filter_groups][1][filters][0][field]=updated_at&searchCriteria[filter_groups]" +
-            //$"[1][filters][0][value]={startDate}&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq&searchCriteria[filter_groups][2][filters][0][field]=updated_at" +
-            //$"&searchCriteria[filter_groups][2][filters][0][value]={endDate}&searchCriteria[filter_groups][2][filters][0][condition_type]=lteq";
-
-
-
-
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuth());
             var bodyError = "";
             try
             {
-                var response = await _client.GetAsync($"{_options.Value.BaseUrl + "/rest/V1/orders" + parameters}");
+                var response = await _client.GetAsync($"{_options.Value.BaseUrl + "/rest/V1/orders/000006326"}");
                 if (!response.IsSuccessStatusCode)
                 {
                     bodyError = await response.Content.ReadAsStringAsync();
@@ -307,6 +318,46 @@ namespace BridgetItService.Services
                     }
                 }
             }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError("Exception = " + ex.StatusCode.ToString()
+                            + $" Using Endpoint Orders Method Get {_options.Value.BaseUrl + _options.Value.Orders } Message = {bodyError}");
+            }
+        }
+
+        public async Task GetOrders(string startDate)
+        {
+            var endDate = DateTime.Now.AddHours(-13).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+            var starttDate = DateTime.Now.AddHours(-13).Subtract(TimeSpan.FromMinutes(15)).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+            var parameters = "?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=complete" +
+                $"&searchCriteria[filter_groups][1][filters][0][field]=updated_at&searchCriteria[filter_groups][1][filters][0][value]={startDate}" +
+                "&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq&searchCriteria[filter_groups][2][filters][0][field]=updated_at" +
+                $"&searchCriteria[filter_groups][2][filters][0][value]={endDate}&searchCriteria[filter_groups][2][filters][0][condition_type]=lteq&searchCriteria[sortOrders][0][direction]=ASC";
+
+
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuth());
+            var bodyError = "";
+            try
+            {
+                var response = await _client.GetAsync($"{_options.Value.BaseUrl + "/rest/V1/orders" + parameters}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    bodyError = await response.Content.ReadAsStringAsync();
+                }
+                 response.EnsureSuccessStatusCode();
+                var content = await response.Content.ReadAsStringAsync();
+
+                var magentoOrder = Deserialize<MagentoOrder>(content);
+                Invoices invoices = _magentoTransactionsMap.Map(magentoOrder);
+
+                if (invoices.Invoice.Count > 0)
+                {
+                    foreach (Invoice invoice in invoices.Invoice)
+                    {
+                        await _infinityPOSClient.PostTransaction(invoice);
+                    }
+                }
+            }
             catch (HttpRequestException ex) {
                 _logger.LogError("Exception = " + ex.StatusCode.ToString()
                             + $" Using Endpoint Orders Method Get {_options.Value.BaseUrl + _options.Value.Orders + parameters} Message = {bodyError}");
@@ -315,10 +366,10 @@ namespace BridgetItService.Services
         public async Task GetRefunds(string startDate)
         {
             var endDate = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-            var starttDate = DateTime.Now.Subtract(TimeSpan.FromMinutes(15)).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+            var starttDate = DateTime.Now.AddHours(-13).Subtract(TimeSpan.FromMinutes(15)).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             var parameters = "?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=closed" +
-                "&searchCriteria[filter_groups][0][filters][0][condition_type]=eq&searchCriteria[filter_groups][1][filters][0][field]=updated_at&searchCriteria[filter_groups]" +
-                $"[1][filters][0][value]={starttDate}&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq&searchCriteria[filter_groups][2][filters][0][field]=created_at" +
+                "&searchCriteria[filter_groups][0][filters][0][condition_type]=eqS&searchCriteria[filter_groups][1][filters][0][field]=updated_at&searchCriteria[filter_groups]" +
+                $"[1][filters][0][value]={startDate}&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq&searchCriteria[filter_groups][2][filters][0][field]=updated_at" +
                 $"&searchCriteria[filter_groups][2][filters][0][value]={endDate}&searchCriteria[filter_groups][2][filters][0][condition_type]=lteq";
              _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuth());
             var bodyError = "";
