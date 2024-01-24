@@ -10,6 +10,8 @@ using BridgetItService.Settings;
 using BridgetItService.MapperFactory;
 using ShopifySharp;
 using BridgetItService.Models.Inifnity;
+using BridgetItService.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace BridgetItService
 {
@@ -30,7 +32,7 @@ namespace BridgetItService
             services.AddSingleton<IInfinityPOSClient, InfinityPOSClient>();
             services.AddSingleton<IShopifyServiceAPI, ShopifyServiceAPI>();
             services.AddSingleton<IMagentoService, MagentoService>();
-            services.AddSingleton<UpdateService>();
+            services.AddSingleton<UpdateService>();     
             services.AddSingleton<IMap<InfinityPOSProduct, Product>, InfinityToShopifyProductMap>();
 
             services.AddLogging((logging) =>
@@ -40,7 +42,11 @@ namespace BridgetItService
 
             services.AddMvc();
             services.AddControllers();
-            
+
+            services.AddDbContext<BridgedItContext>(options =>
+       options.UseNpgsql(Configuration.GetConnectionString("Db")));
+
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo

@@ -11,6 +11,13 @@ using BridgetItService.Models.Inifnity;
 using BridgetItService.Models.Magento;
 using System.Collections.Generic;
 using Amazon.Runtime.Internal;
+using BridgetItService.Data;
+using Microsoft.Extensions.Configuration;
+using BridgetItService.Models.Database;
+using Microsoft.EntityFrameworkCore;
+using System.Runtime.CompilerServices;
+using BridgetItService.Models;
+using System.Linq;
 
 namespace BridgetItService.Services
 {
@@ -25,7 +32,9 @@ namespace BridgetItService.Services
         private readonly HttpClient _client;
         private readonly string MEDIA_TYPE = "application/json";
         private readonly ILogger<MagentoService> _logger;
-        public MagentoService(IServiceProvider serviceProvider, IInfinityPOSClient infinityPOSClient, ILogger<MagentoService> logger)
+        private IConfiguration _configuration;
+
+        public MagentoService(IServiceProvider serviceProvider, IInfinityPOSClient infinityPOSClient, ILogger<MagentoService> logger, IConfiguration configuration)
         {   
             _options = serviceProvider.GetService<IOptions<MagentoSettings>>();
             var handler = new HttpClientHandler
@@ -39,6 +48,7 @@ namespace BridgetItService.Services
             _magentoTransactionsMap = serviceProvider.GetService<IMap<MagentoOrder, Invoices>>();
             _magentoRefundMap = serviceProvider.GetService<IMap<MagentoRefund, Invoices>>();
             _magentoPostToPut = serviceProvider.GetService<IMap<MagentoProduct, PutMagentoProduct>>();
+            _configuration = configuration;
 
             _infinityPOSClient = infinityPOSClient;
             _logger = logger;
@@ -163,6 +173,7 @@ namespace BridgetItService.Services
                     response = await _client.PostAsync($"{_options.Value.BaseUrl + _options.Value.CreateProduct}", body);
                     bodyError = await response.Content.ReadAsStringAsync();
                     response.EnsureSuccessStatusCode();
+                    await PostProductsDB(product);
                     _logger.LogInformation("Product Published" + " With Body = " + TransformToRawString(product)
                         + $" Using Endpoint {_options.Value.BaseUrl + _options.Value.CreateProduct} Message = {bodyError}");
                 }
@@ -178,9 +189,31 @@ namespace BridgetItService.Services
             }
         }
 
+        private async Task PostProductsDB(MagentoProduct product)
+        {
+            using (var context = new BridgedItContext(_configuration))
+            {
+                var dbProduct = ConvertToDbProduct(product);
+
+                try
+                {
+                    context.Product.Add(dbProduct);
+                    await context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+        }
+
         private async Task SendProducts(IList<MagentoProduct> products)
         {
             var sent = 0;
+
             foreach (MagentoProduct product in products)
             {
                     _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuth());
@@ -202,7 +235,8 @@ namespace BridgetItService.Services
                         {
                             if (product.Status == 2)
                             {
-                            }
+                                products.RemoveAt(sent);
+                        }
                             else
                             {
                                 await PutProduct(product);
@@ -210,10 +244,13 @@ namespace BridgetItService.Services
                         }
                         else
                         {
+                            products.RemoveAt(sent);
                             _logger.LogError("Exception = " + ex.StatusCode.ToString() + " With Body = " + TransformToRawString(product)
                                 + $" Using Endpoint {_options.Value.BaseUrl + _options.Value.CreateProduct} Message = {bodyError}");
                         }
+                        
                     }
+
             }
         }
 
@@ -226,12 +263,11 @@ namespace BridgetItService.Services
             try
             {
                 var response = await _client.PutAsync($"{_options.Value.BaseUrl + _options.Value.CreateProduct}/" + putMagentoProduct.Product.Sku, putBody);
-                if (!response.IsSuccessStatusCode)
-                {
-                    bodyError = await response.Content.ReadAsStringAsync();
-                }
                 bodyError = await response.Content.ReadAsStringAsync();
+
                 response.EnsureSuccessStatusCode();
+                await UpdateProductsDB(product);
+
                 _logger.LogInformation("Product Updated" + " With Body = " + TransformToRawString(putMagentoProduct.Product)
                    + $" Using Endpoint {_options.Value.BaseUrl + _options.Value.CreateProduct + "/" + putMagentoProduct.Product.Sku} Message = {bodyError}");
             }
@@ -252,6 +288,43 @@ namespace BridgetItService.Services
                 }
                 
             }
+        }
+
+        private async Task UpdateProductsDB(MagentoProduct product)
+        {
+            using (var context = new BridgedItContext(_configuration))
+            {
+                var dbProduct = ConvertToDbProduct(product);
+
+                try
+                {
+                    context.Product.Update(dbProduct);
+                    await context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    context.Product.Add(dbProduct);
+                    await context.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+        }
+
+        private DBProduct ConvertToDbProduct(MagentoProduct product)
+        {
+            return new DBProduct {
+                Sku = product.Sku,
+                Name = product.Name,
+                TypeId = product.TypeId,
+                AttributeSetId = product.AttributeSetId,
+                Visibility = product.Visibility,
+                Status = product.Status,
+                Qty = product.ExtensionAttributes.StockItem.Qty,
+                IsInStock = product.ExtensionAttributes.StockItem.IsInStock,
+                LastUpdate = DateTime.UtcNow.AddHours(-13),
+            };
         }
 
         private async Task DeleteProduct(string sku)
@@ -328,7 +401,7 @@ namespace BridgetItService.Services
         public async Task GetOrders(string startDate)
         {
             var endDate = DateTime.Now.AddHours(-13).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-            var starttDate = DateTime.Now.AddHours(-13).Subtract(TimeSpan.FromMinutes(15)).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+            var starttDate = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             var parameters = "?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=complete" +
                 $"&searchCriteria[filter_groups][1][filters][0][field]=updated_at&searchCriteria[filter_groups][1][filters][0][value]={startDate}" +
                 "&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq&searchCriteria[filter_groups][2][filters][0][field]=updated_at" +
@@ -337,6 +410,7 @@ namespace BridgetItService.Services
 
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuth());
             var bodyError = "";
+            var index = 0;
             try
             {
                 var response = await _client.GetAsync($"{_options.Value.BaseUrl + "/rest/V1/orders" + parameters}");
@@ -349,12 +423,26 @@ namespace BridgetItService.Services
 
                 var magentoOrder = Deserialize<MagentoOrder>(content);
                 Invoices invoices = _magentoTransactionsMap.Map(magentoOrder);
-
+                var infinityTr = await _infinityPOSClient.PostTransactionS();
+                foreach (Invoice invoice in invoices.Invoice)
+                {
+                    var matchingInvoice = infinityTr.FirstOrDefault(i => i.invoice_value_including_sales_tax == GetPaymentValue(invoice.Payments));
+                    if (matchingInvoice != null)
+                    {
+                        invoice.InvoiceCode = matchingInvoice.InvoiceCode;
+                    }
+                }
+                
                 if (invoices.Invoice.Count > 0)
                 {
                     foreach (Invoice invoice in invoices.Invoice)
                     {
-                        await _infinityPOSClient.PostTransaction(invoice);
+                        //await _infinityPOSClient.PostTransaction(invoice);
+                        if (invoice.InvoiceCode != null)
+                        {
+                            await UpdateTransactionsDb(invoice, magentoOrder.Items[index].IncrementId);
+                            index++;
+                        }
                     }
                 }
             }
@@ -362,6 +450,55 @@ namespace BridgetItService.Services
                 _logger.LogError("Exception = " + ex.StatusCode.ToString()
                             + $" Using Endpoint Orders Method Get {_options.Value.BaseUrl + _options.Value.Orders + parameters} Message = {bodyError}");
             }
+        }
+
+        private async Task UpdateTransactionsDb(Invoice invoice, string magentoId)
+        {
+            using (var context = new BridgedItContext(_configuration))
+            {
+                var dbProduct = ConvertToDbTransaction(invoice, magentoId);
+
+                try
+                {
+                    context.Transaction.Add(dbProduct);
+                    await context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+        }
+        private DBTransaction ConvertToDbTransaction(Invoice invoice, string magentoId)
+        {
+            return new DBTransaction
+            {
+                SalesPersonCode = invoice.SalesPersonCode,
+                SiteCode = invoice.SiteCode.ToString(),
+                MagentoTransactionId = magentoId,
+                InfinityTransactionId = invoice.InvoiceCode ?? "",
+                PaymentValue = GetPaymentValue(invoice.Payments),
+                SentTime = DateTime.UtcNow.AddHours(-13),
+            };
+        }
+        private double GetPaymentValue(List<Payment> payments)
+        {
+            double amount = 0;
+            if (payments != null)
+            {
+                foreach (Payment payment in payments)
+                {
+                    amount += payment.PaymentValue;
+                }
+            }
+            else
+            {
+                amount = 0;
+            }
+            return amount;
         }
         public async Task GetRefunds(string startDate)
         {

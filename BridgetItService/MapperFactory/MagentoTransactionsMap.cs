@@ -19,7 +19,7 @@ namespace BridgetItService.MapperFactory
                 invoices.Invoice.Add(new Invoice
                 {
                     SalesPersonCode = "1",
-                    SiteCode = "1",
+                    SiteCode = 1,
                     Lines = MapLines(item),
                     Payments = MapPayment(item),
                 });

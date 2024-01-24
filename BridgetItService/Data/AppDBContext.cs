@@ -1,4 +1,5 @@
 ﻿using BridgetItService.Models;
+using BridgetItService.Models.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace BridgetItService.Data
@@ -17,6 +18,15 @@ namespace BridgetItService.Data
             options.UseNpgsql(Configuration.GetConnectionString("Db"));
         }
 
-        public DbSet<DbProduct> Products { get; set; }
+        public DbSet<DBProduct> Product { get; set; }
+        public DbSet<DBTransaction> Transaction { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<DBProduct>().HasKey(p => p.Sku);
+            modelBuilder.Entity<DBTransaction>().HasKey(p => p.InfinityTransactionId);
+        }
     }
 }

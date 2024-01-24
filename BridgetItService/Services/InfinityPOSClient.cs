@@ -14,6 +14,11 @@ using Microsoft.Office.Interop.Excel;
 using System;
 using System.Reflection.Metadata;
 using System.Fabric.Query;
+using BridgetItService.Data;
+using BridgetItService.Models.Magento;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using BridgetItService.Models.Database;
 
 namespace BridgetItService.Services
 {
@@ -26,8 +31,9 @@ namespace BridgetItService.Services
         private readonly string MEDIA_TYPE = "application/json";
         private readonly string GUID = Guid.NewGuid().ToString();
         private readonly ILogger<MagentoService> _logger;
+        private IConfiguration _configuration;
 
-        public InfinityPOSClient(IHttpClientFactory clientFactory, IServiceProvider provider, ILogger<MagentoService> logger)
+        public InfinityPOSClient(IHttpClientFactory clientFactory, IServiceProvider provider, ILogger<MagentoService> logger, IConfiguration configuration)
         {
             _options = provider.GetService<IOptions<InfinityPOSSettings>>();
             var handler = new HttpClientHandler
@@ -37,6 +43,7 @@ namespace BridgetItService.Services
             _client = new HttpClient(handler);
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(MEDIA_TYPE));
             _logger = logger;
+            _configuration = configuration;
         }
         public async Task<string> GetAuthentication()
         {
@@ -436,7 +443,8 @@ namespace BridgetItService.Services
                     {
                         InfinityPOSProduct prod = new InfinityPOSProduct();
                         prod = await GetProduct(inv.ProductCode);
-                        if (prod != null) {
+                        if (prod != null)
+                        {
                             prod.SellableQuantity = inv.SellableQuantity;
                             products.Products.Add(prod);
                         }
@@ -610,12 +618,12 @@ namespace BridgetItService.Services
             }
         }
 
-        public async Task PostTransactionS()
+        public async Task<List<Invoice>> PostTransactionS()
         {
             var bodyError = "";
             GetTransactionRequestcs invoice = new GetTransactionRequestcs();
-            invoice.Created = new Created { DateFrom = "2024-01-10",
-                                            DateTo = "2024-01-16"
+            invoice.Created = new Created { DateFrom = "2024-01-22",
+                                            DateTo = "2024-01-26"
             };
             invoice.Offset = 0;
             invoice.MaxRecords = "500";
@@ -642,9 +650,13 @@ namespace BridgetItService.Services
                 response.EnsureSuccessStatusCode();
 
                 var content = await response.Content.ReadAsStringAsync();
+
+                var Infinity = Deserialize<List<Invoice>>(content);
+                return Infinity;
             }
             catch (HttpRequestException ex)
             {
+                return null;
                 _logger.LogError("Exception = " + ex.StatusCode.ToString()
                         + $" Using Endpoint Method Get {_options.Value.BaseEndpoint + _options.Value.PostInvoicesEndpoint}" +
                         $" Body = {TransformToRawString(invoice)}  Message = {bodyError}");
