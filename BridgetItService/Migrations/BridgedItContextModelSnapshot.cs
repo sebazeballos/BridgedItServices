@@ -87,6 +87,22 @@ namespace BridgetItService.Migrations
 
                     b.ToTable("Transaction");
                 });
+
+            modelBuilder.Entity("BridgetItService.Models.Database.Health", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("LastRun")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Health");
+                });
 #pragma warning restore 612, 618
         }
     }

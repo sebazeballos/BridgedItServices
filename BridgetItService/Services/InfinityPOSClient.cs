@@ -245,6 +245,7 @@ namespace BridgetItService.Services
 
         private async Task<InfinityPosProducts> GetInventories(InfinityPosProducts products)
         {
+            if (products != null) { 
             HashSet<string> productCodes = new HashSet<string>(products.Products.Select(p => p.ProductCode));
             var responseBody = "";
             HashSet<string> batch = new HashSet<string>();
@@ -287,7 +288,8 @@ namespace BridgetItService.Services
             }
             var onlyLastUpdated = GetLastUpdatedInventory(inventories);
             return SetProductsSync(onlyLastUpdated, products);
-            
+            }
+            else { return null; }
             
         }
 
@@ -585,7 +587,7 @@ namespace BridgetItService.Services
             }
         }
 
-        public async Task PostTransaction(Invoice invoice)
+        public async Task<string?> PostTransaction(Invoice invoice)
         {
             var bodyError = "";
             try
@@ -609,21 +611,24 @@ namespace BridgetItService.Services
                 response.EnsureSuccessStatusCode();
 
                 var content = await response.Content.ReadAsStringAsync();
+                return Deserialize<InvoiceDB>(content).InvoiceCode;
+                 
             }
             catch (HttpRequestException ex)
             {
+                return null;
                 _logger.LogError("Exception = " + ex.StatusCode.ToString()
                         + $" Using Endpoint Method Get {_options.Value.BaseEndpoint + _options.Value.PostInvoicesEndpoint}" +
                         $" Body = {TransformToRawString(invoice)}  Message = {bodyError}");
             }
         }
 
-        public async Task<List<Invoice>> PostTransactionS()
+        public async Task<List<InvoiceDB>> PostTransactionS()
         {
             var bodyError = "";
             GetTransactionRequestcs invoice = new GetTransactionRequestcs();
-            invoice.Created = new Created { DateFrom = "2024-01-22",
-                                            DateTo = "2024-01-26"
+            invoice.Created = new Created { DateFrom = "2023-11-10",
+                                            DateTo = "2024-02-03"
             };
             invoice.Offset = 0;
             invoice.MaxRecords = "500";
@@ -651,7 +656,7 @@ namespace BridgetItService.Services
 
                 var content = await response.Content.ReadAsStringAsync();
 
-                var Infinity = Deserialize<List<Invoice>>(content);
+                var Infinity = Deserialize<List<InvoiceDB>>(content);
                 return Infinity;
             }
             catch (HttpRequestException ex)

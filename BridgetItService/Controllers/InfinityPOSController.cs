@@ -32,6 +32,13 @@ namespace BridgetItService.Controllers
             return Ok($"the date is {startDate}");
         }
 
+        [HttpPost("Order/{incrementalId}")]
+        public async Task<IActionResult> SyncronizeOrderAsync(string incrementalId)
+        {
+            await _apiHandler.PublishOrder(incrementalId);
+            return Ok($"the date is {incrementalId}");
+        }
+
         [HttpPost("/AddProductsInShopify")]
         public async Task<IActionResult> PublishProduct(string startDate)
         {

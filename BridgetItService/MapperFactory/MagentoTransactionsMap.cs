@@ -10,19 +10,26 @@ namespace BridgetItService.MapperFactory
         public readonly string DELIVERY_SKU = "987878465789987";
         public readonly string WALLPAPER_SKU = "7777777571301";
         public readonly string FABRIC_SKU_ = "7777777571318";
+        public readonly string COURRIER = "7777777090444";
         public Invoices Map(MagentoOrder order)
         {
             var invoices = new Invoices();
             invoices.Invoice = new List<Invoice>();
             foreach (Item item in order.Items)
-            {
-                invoices.Invoice.Add(new Invoice
+            { 
+                DateTime updatedAt;
+                if (DateTime.TryParse(item.UpdatedAt, out updatedAt))
                 {
-                    SalesPersonCode = "1",
-                    SiteCode = 1,
-                    Lines = MapLines(item),
-                    Payments = MapPayment(item),
-                });
+                    updatedAt = DateTime.SpecifyKind(updatedAt, DateTimeKind.Utc);
+                    invoices.Invoice.Add(new Invoice
+                    {
+                        SalesPersonCode = "1",
+                        SiteCode = 1,
+                        UpdatedAt = updatedAt, // Using the parsed DateTime
+                        Lines = MapLines(item),
+                        Payments = MapPayment(item),
+                    });
+                }
             }
             return invoices;
         }
@@ -34,18 +41,22 @@ namespace BridgetItService.MapperFactory
                 {
                     if (transactionItem.BasePriceInclTax > 0)
                     {
-                        if (transactionItem.Name.Contains("Wallpaper")) {
+                        if (transactionItem.Name.Contains("Wallpaper") || transactionItem.Sku.Contains("Wallpaper")) {
                             transactionItem.Sku = WALLPAPER_SKU;
                         }
-                        if (transactionItem.Name.Contains("Fabric"))
+                        if (transactionItem.Name.Contains("Fabric") || transactionItem.Sku.Contains("Fabric"))
                         {
                         transactionItem.Sku = FABRIC_SKU_;
                         }
-                        if (transactionItem.Name.Contains("International Air Freight"))
+                        if (transactionItem.Name.Contains("International Air Freight") || transactionItem.Sku.Contains("International Air Freight"))
                         {
                             transactionItem.Sku = DELIVERY_SKU;
                         }
-                    var discount = 0.0;
+                        if (transactionItem.Name.Contains("Courier") || transactionItem.Sku.Contains("Courier"))
+                        {
+                            transactionItem.Sku = COURRIER;
+                        }
+                        var discount = 0.0;
                         if (transactionItem.BaseDiscountAmount != 0 && transactionItem.QtyOrdered != 0)
                         {
                             discount = transactionItem.BaseDiscountAmount / transactionItem.QtyOrdered;

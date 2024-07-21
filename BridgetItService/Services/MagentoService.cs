@@ -236,7 +236,7 @@ namespace BridgetItService.Services
                             if (product.Status == 2)
                             {
                                 products.RemoveAt(sent);
-                        }
+                            }
                             else
                             {
                                 await PutProduct(product);
@@ -321,9 +321,10 @@ namespace BridgetItService.Services
                 AttributeSetId = product.AttributeSetId,
                 Visibility = product.Visibility,
                 Status = product.Status,
+                Price  = product.Price,
                 Qty = product.ExtensionAttributes.StockItem.Qty,
                 IsInStock = product.ExtensionAttributes.StockItem.IsInStock,
-                LastUpdate = DateTime.UtcNow.AddHours(-13),
+                LastUpdate = DateTime.UtcNow,
             };
         }
 
@@ -400,8 +401,7 @@ namespace BridgetItService.Services
 
         public async Task GetOrders(string startDate)
         {
-            var endDate = DateTime.Now.AddHours(-13).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-            var starttDate = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+            var endDate = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             var parameters = "?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=complete" +
                 $"&searchCriteria[filter_groups][1][filters][0][field]=updated_at&searchCriteria[filter_groups][1][filters][0][value]={startDate}" +
                 "&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq&searchCriteria[filter_groups][2][filters][0][field]=updated_at" +
@@ -423,26 +423,30 @@ namespace BridgetItService.Services
 
                 var magentoOrder = Deserialize<MagentoOrder>(content);
                 Invoices invoices = _magentoTransactionsMap.Map(magentoOrder);
-                var infinityTr = await _infinityPOSClient.PostTransactionS();
-                foreach (Invoice invoice in invoices.Invoice)
-                {
-                    var matchingInvoice = infinityTr.FirstOrDefault(i => i.invoice_value_including_sales_tax == GetPaymentValue(invoice.Payments));
-                    if (matchingInvoice != null)
-                    {
-                        invoice.InvoiceCode = matchingInvoice.InvoiceCode;
-                    }
-                }
                 
                 if (invoices.Invoice.Count > 0)
                 {
                     foreach (Invoice invoice in invoices.Invoice)
                     {
-                        //await _infinityPOSClient.PostTransaction(invoice);
-                        if (invoice.InvoiceCode != null)
+                        if (!await CheckTransacction(magentoOrder.Items[index].IncrementId))
                         {
-                            await UpdateTransactionsDb(invoice, magentoOrder.Items[index].IncrementId);
-                            index++;
+                            var invoiceCode = await _infinityPOSClient.PostTransaction(invoice);
+
+                            if (invoiceCode != null)
+                            {
+                                InvoiceDB invoiceDB = new InvoiceDB
+                                {
+                                    InvoiceCode = invoiceCode,
+                                    SalesPersonCode = invoice.SalesPersonCode,
+                                    SiteCode = invoice.SiteCode,
+                                    Lines = invoice.Lines,
+                                    Payments = invoice.Payments,
+                                    UpdatedAt = invoice.UpdatedAt,
+                                };
+                                await UpdateTransactionsDb(invoiceDB, magentoOrder.Items[index].IncrementId);
+                            }
                         }
+                        index++;
                     }
                 }
             }
@@ -451,8 +455,119 @@ namespace BridgetItService.Services
                             + $" Using Endpoint Orders Method Get {_options.Value.BaseUrl + _options.Value.Orders + parameters} Message = {bodyError}");
             }
         }
+        public async Task<string> GetTransactionsByIncrementalId(string incrementalId)
+        {
+            var parameters = $"?searchCriteria[filter_groups][0][filters][0][field]=increment_id" +
+                             $"&searchCriteria[filter_groups][0][filters][0][value]={incrementalId}" +
+                             "&searchCriteria[filter_groups][0][filters][0][condition_type]=eq";
 
-        private async Task UpdateTransactionsDb(Invoice invoice, string magentoId)
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuth());
+            var bodyError = "";
+            try
+            {
+                var response = await _client.GetAsync($"{_options.Value.BaseUrl}/rest/V1/orders{parameters}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    bodyError = await response.Content.ReadAsStringAsync();
+                    _logger.LogError($"Failed to retrieve transactions. Error: {bodyError}");
+                    return $"Failed to retrieve transactions. Error: {bodyError}";
+                }
+                response.EnsureSuccessStatusCode();
+                var content = await response.Content.ReadAsStringAsync();
+
+                var magentoOrder = Deserialize<MagentoOrder>(content);
+                Invoices invoices = _magentoTransactionsMap.Map(magentoOrder);
+                if (!await CheckTransacction(magentoOrder.Items[0].IncrementId))
+                {
+                    var invoiceCode = await _infinityPOSClient.PostTransaction(invoices.Invoice[0]);
+
+                    if (invoiceCode != null)
+                    {
+                        InvoiceDB invoiceDB = new InvoiceDB
+                        {
+                            InvoiceCode = invoiceCode,
+                            SalesPersonCode = invoices.Invoice[0].SalesPersonCode,
+                            SiteCode = invoices.Invoice[0].SiteCode,
+                            UpdatedAt = invoices.Invoice[0].UpdatedAt,
+                            Lines = invoices.Invoice[0].Lines,
+                            Payments = invoices.Invoice[0].Payments,
+                        };
+                        await UpdateTransactionsDb(invoiceDB, magentoOrder.Items[0].IncrementId);
+                        return invoiceCode;
+                    }
+                }
+                return "not Created";
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError($"Exception: {ex.Message}. Endpoint: {_options.Value.BaseUrl}/rest/V1/orders{parameters}. Body Error: {bodyError}");
+                return $"Exception: {ex.Message}. Endpoint: {_options.Value.BaseUrl}/rest/V1/orders{parameters}. Body Error: {bodyError}";
+            }
+        }
+
+        public async Task PoblateDB(string startDate)
+        {
+            var endDate = DateTime.Now.AddHours(-13).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+            var starttDate = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+            var parameters = "?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=complete" +
+                $"&searchCriteria[filter_groups][1][filters][0][field]=updated_at&searchCriteria[filter_groups][1][filters][0][value]={startDate}" +
+                "&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq&searchCriteria[filter_groups][2][filters][0][field]=updated_at" +
+                $"&searchCriteria[filter_groups][2][filters][0][value]={endDate}&searchCriteria[filter_groups][2][filters][0][condition_type]=lteq&searchCriteria[sortOrders][0][direction]=ASC";
+
+
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAuth());
+            var bodyError = "";
+            var index = 0;
+            try
+            {
+                var response = await _client.GetAsync($"{_options.Value.BaseUrl + "/rest/V1/orders" + parameters}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    bodyError = await response.Content.ReadAsStringAsync();
+                }
+                response.EnsureSuccessStatusCode();
+                var content = await response.Content.ReadAsStringAsync();
+                var infinityTr = await _infinityPOSClient.PostTransactionS();
+                var magentoOrder = Deserialize<MagentoOrder>(content);
+                Invoices invoices = _magentoTransactionsMap.Map(magentoOrder);
+
+                    if (invoices.Invoice.Count > 0)
+                    {
+                        foreach (Invoice invoice in invoices.Invoice)
+                        {
+                            if (!await CheckTransacction(magentoOrder.Items[index].IncrementId))
+                            {
+                                if (infinityTr.Any(i => i.invoice_value_including_sales_tax == GetPaymentValue(invoice.Payments)))
+                                {
+                                    string matchingInvoice = infinityTr.FirstOrDefault(i => i.invoice_value_including_sales_tax == GetPaymentValue(invoice.Payments)).InvoiceCode;
+                                    InvoiceDB invoiceDB = new InvoiceDB
+                                    {
+                                        InvoiceCode = matchingInvoice,
+                                        SalesPersonCode = invoice.SalesPersonCode,
+                                        SiteCode = invoice.SiteCode,
+                                        Lines = invoice.Lines,
+                                        Payments = invoice.Payments,
+                                        UpdatedAt = invoice.UpdatedAt,
+                                    };
+
+                                    if (invoiceDB.InvoiceCode != null)
+                                    {
+                                        await UpdateTransactionsDb(invoiceDB, magentoOrder.Items[index].IncrementId);
+                                        index++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError("Exception = " + ex.StatusCode.ToString()
+                            + $" Using Endpoint Orders Method Get {_options.Value.BaseUrl + _options.Value.Orders + parameters} Message = {bodyError}");
+            }
+        }
+
+        private async Task UpdateTransactionsDb(InvoiceDB invoice, string magentoId)
         {
             using (var context = new BridgedItContext(_configuration))
             {
@@ -462,7 +577,7 @@ namespace BridgetItService.Services
                 {
                     context.Transaction.Add(dbProduct);
                     await context.SaveChangesAsync();
-                }
+                } 
                 catch (DbUpdateConcurrencyException)
                 {
                     
@@ -472,7 +587,44 @@ namespace BridgetItService.Services
                 }
             }
         }
-        private DBTransaction ConvertToDbTransaction(Invoice invoice, string magentoId)
+
+        private async Task<bool> CheckTransacction(string magentoId)
+        {
+            using (var context = new BridgedItContext(_configuration))
+            {
+                try
+                {
+                    return await context.Transaction
+                    .AnyAsync(t => t.MagentoTransactionId == magentoId);
+                }
+                catch(Exception e) { 
+                    return true; 
+                }
+
+
+            }
+
+        }
+        public async Task UpdateHealth()
+        {
+            using (var context = new BridgedItContext(_configuration))
+            {
+
+                try
+                {
+                    context.Health.Update(new Health { Id = 1, LastRun = DateTime.UtcNow});
+                    await context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+        }
+        private DBTransaction ConvertToDbTransaction(InvoiceDB invoice, string magentoId)
         {
             return new DBTransaction
             {
@@ -481,7 +633,7 @@ namespace BridgetItService.Services
                 MagentoTransactionId = magentoId,
                 InfinityTransactionId = invoice.InvoiceCode ?? "",
                 PaymentValue = GetPaymentValue(invoice.Payments),
-                SentTime = DateTime.UtcNow.AddHours(-13),
+                SentTime = invoice.UpdatedAt,
             };
         }
         private double GetPaymentValue(List<Payment> payments)
@@ -523,9 +675,24 @@ namespace BridgetItService.Services
                 Invoices invoices = _magentoRefundMap.Map(magentoRefund);
                 if (invoices.Invoice.Count > 0)
                 {
+                    var index = 0;
                     foreach (Invoice invoice in invoices.Invoice)
                     {
-                        await _infinityPOSClient.PostTransaction(invoice);
+                        var invoiceCode = await _infinityPOSClient.PostTransaction(invoice);
+
+                        if (invoiceCode != null)
+                        {
+                            InvoiceDB invoiceDB = new InvoiceDB
+                            {
+                                InvoiceCode = invoiceCode,
+                                SalesPersonCode = invoice.SalesPersonCode,
+                                SiteCode = invoice.SiteCode,
+                                Lines = invoice.Lines,
+                                Payments = invoice.Payments
+                            };
+                            await UpdateTransactionsDb(invoiceDB, magentoRefund.Items[index].IncrementId);
+                            index++;
+                        }
                     }
                 }
             }

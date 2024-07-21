@@ -36,11 +36,7 @@ namespace BridgetItService.Services
             {
                 checkTimeProducts = time.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             }
-            var  checkTimeTransactions = await GetLastTransactionUpdate() ?? time.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-            if (checkTimeTransactions == null)
-            {
-                checkTimeTransactions = time.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-            }
+            var  checkTimeTransactions = await GetLastTransactionUpdate();
             if (_options.Value.Type != "0")
             {
                 var products = await _infinityPOSClient.GetProducts(checkTimeProducts);
@@ -52,11 +48,37 @@ namespace BridgetItService.Services
                 if (_options.Value.Type == "1")
                 {
                     await _magentoService.PublishProducts(await _infinityPOSClient.AddStock(products, checkTimeProducts));
-                    await _magentoService.GetOrders(checkTimeTransactions);
-                    await _magentoService.GetRefunds(checkTimeTransactions);
+                    //await _magentoService.PoblateDB(checkTimeTransactions);
+                    if (checkTimeTransactions != null)
+                    {
+                        await _magentoService.GetOrders(checkTimeTransactions);
+                        await _magentoService.GetRefunds(checkTimeTransactions);
+                    }
+                    await _magentoService.UpdateHealth();
                 }
             }
         }
+
+
+        
+
+        public async Task SyncronizePlatformsAsync(string time) => await SyncronizeTriquestra(time);
+
+        public async Task SyncronizeTriquestra(string checkTime)
+        {
+            //var products = await _infinityPOSClient.SetProductAsFalse(checkTime);
+            //await _infinityPOSClient.PostTransactionS();
+            //await _magentoService.GetOrder();
+
+            //await _magentoService.GetRefunds(checkTime);
+            //await _magentoService.PoblateDB(checkTime);
+            await _magentoService.GetOrders(checkTime);
+            var infinityProducts = await _infinityPOSClient.GetProducts(checkTime);
+            await _magentoService.PublishProducts(await _infinityPOSClient.AddStock(infinityProducts, checkTime));
+        }
+
+        public async Task<string> PublishOrder(string incrementalId)
+        => await _magentoService.GetTransactionsByIncrementalId(incrementalId);
 
         public async Task<string?> GetLastProductUpdate()
         {
@@ -70,7 +92,7 @@ namespace BridgetItService.Services
                                           .Select(p => p.LastUpdate)
                                           .FirstOrDefaultAsync();
 
-                    return lastUpdate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                    return lastUpdate.ToUniversalTime().AddHours(-1).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -94,7 +116,7 @@ namespace BridgetItService.Services
                              .OrderByDescending(t => t.SentTime)
                              .Select(t => t.SentTime)
                              .FirstOrDefaultAsync();
-                    return date.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                    return date.AddHours(-2).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -105,19 +127,6 @@ namespace BridgetItService.Services
                     return null;
                 }
             }
-        }
-
-        public async Task SyncronizePlatformsAsync(string time) => await SyncronizeTriquestra(time);
-
-        public async Task SyncronizeTriquestra(string checkTime)
-        {
-            //var products = await _infinityPOSClient.SetProductAsFalse(checkTime);
-            //await _infinityPOSClient.PostTransactionS();
-            //await _magentoService.GetOrder();
-            //var infinityProducts = await _infinityPOSClient.GetProducts(checkTime);
-            //await _magentoService.GetRefunds(checkTime);
-            await _magentoService.GetOrders(checkTime);
-            //await _magentoService.PublishProducts(await _infinityPOSClient.AddStock(infinityProducts, checkTime));
         }
     }
 }

@@ -20,6 +20,7 @@ namespace BridgetItService.Data
 
         public DbSet<DBProduct> Product { get; set; }
         public DbSet<DBTransaction> Transaction { get; set; }
+        public DbSet<Health> Health { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
