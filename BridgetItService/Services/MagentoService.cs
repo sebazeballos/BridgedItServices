@@ -678,20 +678,23 @@ namespace BridgetItService.Services
                     var index = 0;
                     foreach (Invoice invoice in invoices.Invoice)
                     {
-                        var invoiceCode = await _infinityPOSClient.PostTransaction(invoice);
-
-                        if (invoiceCode != null)
+                        if (!await CheckTransacction(magentoRefund.Items[index].IncrementId))
                         {
-                            InvoiceDB invoiceDB = new InvoiceDB
+                            var invoiceCode = await _infinityPOSClient.PostTransaction(invoice);
+
+                            if (invoiceCode != null)
                             {
-                                InvoiceCode = invoiceCode,
-                                SalesPersonCode = invoice.SalesPersonCode,
-                                SiteCode = invoice.SiteCode,
-                                Lines = invoice.Lines,
-                                Payments = invoice.Payments
-                            };
-                            await UpdateTransactionsDb(invoiceDB, magentoRefund.Items[index].IncrementId);
-                            index++;
+                                InvoiceDB invoiceDB = new InvoiceDB
+                                {
+                                    InvoiceCode = invoiceCode,
+                                    SalesPersonCode = invoice.SalesPersonCode,
+                                    SiteCode = invoice.SiteCode,
+                                    Lines = invoice.Lines,
+                                    Payments = invoice.Payments
+                                };
+                                await UpdateTransactionsDb(invoiceDB, magentoRefund.Items[index].IncrementId);
+                                index++;
+                            }
                         }
                     }
                 }
