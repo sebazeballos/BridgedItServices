@@ -39,7 +39,7 @@ namespace BridgetItService.Services
             var  checkTimeTransactions = await GetLastTransactionUpdate();
             if (_options.Value.Type != "0")
             {
-                var products = await _infinityPOSClient.GetProducts(checkTimeProducts);
+                //var products = await _infinityPOSClient.GetProducts(checkTimeProducts);
                 if (_options.Value.Type == "2")
                 {
                     //await _shopifyService.PublishProducts(products);
@@ -47,8 +47,7 @@ namespace BridgetItService.Services
                 }
                 if (_options.Value.Type == "1")
                 {
-                    await _magentoService.PublishProducts(await _infinityPOSClient.AddStock(products, checkTimeProducts));
-                    //await _magentoService.PoblateDB(checkTimeTransactions);
+                    //await _magentoService.PublishProducts(await _infinityPOSClient.AddStock(products, checkTimeProducts));
                     if (checkTimeTransactions != null)
                     {
                         await _magentoService.GetOrders(checkTimeTransactions);
